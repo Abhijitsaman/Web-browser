@@ -1,0 +1,626 @@
+<meta name='viewport' content='width=device-width, initial-scale=1'/><!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <title>Browser Home</title>
+    <!-- A modern, clean font similar to the one used in Chrome for Android -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        /* --- CSS Reset and Base Styles --- */
+        :root {
+            /* Light Theme (Default) */
+            --background-color: #FFFFFF;
+            --text-color: #202124;
+            --secondary-text-color: #5f6368;
+            --link-color: #1a0dab;
+            --search-bar-bg: #f1f3f4;
+            --shortcut-icon-bg: #f1f3f4;
+            --modal-overlay-bg: rgba(0, 0, 0, 0.5);
+            --dropdown-bg: #ffffff;
+            --dropdown-text-color: #202124;
+            --dropdown-hover-bg: #f1f3f4;
+            --button-color: #1a73e8;
+            --border-color: #dfe1e5;
+            --shadow-color: rgba(0,0,0,0.08);
+        }
+
+        /* NEW: Dark Theme class applied to <body> */
+        body.dark-theme {
+            --background-color: #202124;
+            --text-color: #e8eaed;
+            --secondary-text-color: #969ba1;
+            --link-color: #8ab4f8;
+            --search-bar-bg: #303134;
+            --shortcut-icon-bg: #303134;
+            --modal-overlay-bg: rgba(0, 0, 0, 0.7);
+            --dropdown-bg: #3c4043;
+            --dropdown-text-color: #e8eaed;
+            --dropdown-hover-bg: rgba(255, 255, 255, 0.1);
+            --border-color: #3c4043;
+            --shadow-color: rgba(0,0,0,0.3);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            color: var(--text-color);
+            overscroll-behavior: none;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+        }
+        
+        .hidden {
+            display: none !important;
+        }
+
+        /* --- Main App Header (Home Screen Only) --- */
+        .app-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            background-color: var(--background-color);
+        }
+
+        .header-icons {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .icon-button {
+            font-size: 24px;
+            cursor: pointer;
+            color: var(--text-color);
+            background: none;
+            border: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 4px;
+        }
+        
+        .icon-button svg {
+            fill: var(--text-color);
+        }
+
+        .tab-switcher {
+            font-size: 14px;
+            font-weight: 500;
+            border: 2px solid var(--secondary-text-color);
+            border-radius: 6px;
+            padding: 2px 8px;
+            min-width: 28px;
+            text-align: center;
+        }
+
+        /* --- Dropdown Menu --- */
+        .dropdown-menu { display: none; position: fixed; top: 60px; right: 10px; background-color: var(--dropdown-bg); color: var(--dropdown-text-color); border-radius: 12px; box-shadow: 0 4px 10px var(--shadow-color); width: 280px; z-index: 1001; overflow: hidden; animation: fadeIn 0.15s ease-out; }
+        .dropdown-menu.show { display: block; }
+        .dropdown-menu ul { list-style: none; }
+        .dropdown-menu ul li { display: flex; align-items: center; padding: 12px 16px; font-size: 16px; cursor: pointer; }
+        .dropdown-menu ul li:hover { background-color: var(--dropdown-hover-bg); }
+        .dropdown-menu ul li svg { margin-right: 16px; fill: var(--dropdown-text-color); }
+        .dropdown-menu-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- NEW: Dark Mode Toggle Switch --- */
+        .theme-switch-wrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        .theme-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .theme-switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--button-color); }
+        input:checked + .slider:before { transform: translateX(20px); }
+
+        /* --- Main Home Screen Content --- */
+        #home-screen { padding-bottom: 20px; }
+        .search-container { padding: 16px; text-align: center; }
+        .search-bar { width: 100%; padding: 14px 20px; font-size: 16px; border: none; border-radius: 28px; background-color: var(--search-bar-bg); color: var(--text-color); outline: none; }
+        .search-bar::placeholder { color: var(--secondary-text-color); }
+
+        /* --- Shortcut Area --- */
+        .shortcuts-container { padding: 16px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px; justify-items: center; }
+        .shortcut-item { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; text-decoration: none; width: 80px; }
+        .shortcut-icon { width: 52px; height: 52px; border-radius: 50%; background-color: var(--shortcut-icon-bg); display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 500; color: var(--text-color); background-size: cover; background-position: center; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
+        .shortcut-icon img { width: 100%; height: 100%; border-radius: 50%; object-fit: cover; }
+        .shortcut-name { font-size: 12px; color: var(--text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; width: 100%; }
+
+        /* --- Modal for "Add Site" --- */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background-color: var(--modal-overlay-bg); justify-content: center; align-items: center; z-index: 2000; }
+        .modal-overlay.show { display: flex; }
+        .modal-content { background-color: var(--background-color); padding: 24px; border-radius: 16px; width: 90%; max-width: 400px; box-shadow: 0 5px 15px rgba(0,0,0,0.3); animation: slideIn 0.2s ease-out; }
+        .modal-content h2 { margin-bottom: 20px; font-size: 20px; font-weight: 500; }
+        .modal-form-group { margin-bottom: 16px; }
+        .modal-input { width: 100%; padding: 12px; border: 1px solid var(--secondary-text-color); border-radius: 8px; background-color: transparent; color: var(--text-color); font-size: 16px; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 12px; margin-top: 24px; }
+        .modal-button { padding: 10px 20px; border: none; border-radius: 8px; font-size: 16px; font-weight: 500; cursor: pointer; }
+        .modal-button-cancel { background-color: transparent; color: var(--button-color); }
+        .modal-button-add { background-color: var(--button-color); color: white; }
+        @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* --- Search Results Page Styles --- */
+        #search-results-page { padding-top: 120px; }
+        .fixed-results-header { position: fixed; top: 0; left: 0; width: 100%; padding: 12px 16px; background-color: var(--background-color); z-index: 1000; box-shadow: 0 2px 4px var(--shadow-color); }
+        .results-header-tabs { position: fixed; top: 68px; /* Height of the search header */ left: 0; width: 100%; padding: 0 16px; border-bottom: 1px solid var(--border-color); background-color: var(--background-color); z-index: 999; }
+        .filter-tabs-container { display: flex; gap: 20px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
+        .filter-tabs-container::-webkit-scrollbar { display: none; }
+        .filter-tab { padding: 12px 4px; font-size: 14px; font-weight: 500; color: var(--secondary-text-color); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
+        .filter-tab.active { color: var(--button-color); border-bottom-color: var(--button-color); }
+        .results-content-area { padding: 16px; }
+        .loader { border: 4px solid var(--search-bar-bg); border-top: 4px solid var(--button-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        /* Organic (All) Results */
+        .organic-result-item { margin-bottom: 24px; }
+        .organic-result-item a { text-decoration: none; }
+        .organic-result-header { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
+        .favicon { width: 20px; height: 20px; flex-shrink: 0; }
+        .organic-result-link { font-size: 14px; color: var(--secondary-text-color); word-break: break-all; }
+        .organic-result-title { font-size: 20px; color: var(--link-color); font-weight: 400; margin-bottom: 6px; }
+        .organic-result-snippet { font-size: 14px; color: var(--secondary-text-color); line-height: 1.5; }
+
+        /* IMPROVED: Image Results */
+        .image-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
+        .image-result-item { display: flex; flex-direction: column; text-decoration: none; }
+        .image-result-item .image-container { position: relative; width: 100%; padding-bottom: 100%; /* Square aspect ratio */ overflow: hidden; border-radius: 12px; margin-bottom: 8px; }
+        .image-result-item img.main-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
+        .image-source-info { display: flex; align-items: center; gap: 6px; text-decoration: none; }
+        .image-source-info .favicon { width: 16px; height: 16px; }
+        .image-source-name { font-size: 12px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+        /* Video Results */
+        .video-result-item { margin-bottom: 20px; }
+        .video-result-item a { text-decoration: none; display: flex; gap: 12px; }
+        .video-thumbnail-container { flex-shrink: 0; position: relative; }
+        .video-thumbnail { width: 160px; height: 90px; border-radius: 8px; object-fit: cover; background-color: var(--search-bar-bg); display: block; }
+        .video-duration { position: absolute; bottom: 6px; right: 6px; background-color: rgba(0,0,0,0.75); color: white; font-size: 12px; padding: 2px 6px; border-radius: 4px; }
+        .video-info .video-title { font-size: 16px; color: var(--link-color); margin-bottom: 4px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .video-info .video-source { font-size: 12px; color: var(--secondary-text-color); }
+
+        /* Pagination */
+        .pagination-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 32px; padding: 0 16px; }
+        .pagination-button { padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 20px; background-color: transparent; color: var(--button-color); font-size: 14px; font-weight: 500; cursor: pointer; }
+        .pagination-button:disabled { color: var(--secondary-text-color); cursor: not-allowed; border-color: var(--search-bar-bg); }
+    </style>
+</head>
+<body>
+
+    <main id="home-screen">
+        <header class="app-header">
+            <!-- NEW: Replaced emoji with modern SVG home icon -->
+            <button class="icon-button" id="home-button">
+                <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
+            </button>
+            <div class="header-icons">
+                <div class="tab-switcher" id="tab-count">1</div>
+                <button class="icon-button" id="menu-button">⋮</button>
+            </div>
+        </header>
+
+        <div class="dropdown-menu" id="dropdown-menu">
+            <ul>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>New Tab</li>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</li>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
+                <!-- NEW: Dark Mode Toggle Option -->
+                <div class="dropdown-menu-divider"></div>
+                <li>
+                    <div class="theme-switch-wrapper">
+                        <span>Dark Mode</span>
+                        <label class="theme-switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        
+        <div class="search-container">
+            <input type="search" id="search-bar" class="search-bar" placeholder="Search or type web address" autocomplete="off">
+        </div>
+        <div class="shortcuts-container" id="shortcuts-container">
+            <div class="shortcut-item" id="add-shortcut-button">
+                <div class="shortcut-icon">+</div>
+                <p class="shortcut-name">Add Site</p>
+            </div>
+        </div>
+    </main>
+    
+    <div id="search-results-page" class="hidden"></div>
+
+    <div class="modal-overlay" id="add-site-modal">
+        <div class="modal-content">
+            <h2>Add Site</h2>
+            <form id="add-site-form">
+                <div class="modal-form-group"><input type="text" id="site-name-input" class="modal-input" placeholder="Name" required></div>
+                <div class="modal-form-group"><input type="url" id="site-url-input" class="modal-input" placeholder="URL" required></div>
+                <div class="modal-actions">
+                    <button type="button" class="modal-button modal-button-cancel" id="cancel-modal-button">Cancel</button>
+                    <button type="submit" class="modal-button modal-button-add">Add</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- CONSTANTS & CONFIGURATION ---
+            const SHORTCUTS_STORAGE_KEY = 'browserHomePageShortcuts';
+            const THEME_STORAGE_KEY = 'browserThemePreference'; // NEW: Key for theme
+            const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284';
+            const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
+            
+            // --- GLOBAL STATE ---
+            let currentQuery = '';
+            let currentPage = 1;
+            let currentSearchType = 'all';
+
+            // --- DOM ELEMENT SELECTIONS ---
+            const body = document.body;
+            const homeButton = document.getElementById('home-button');
+            const menuButton = document.getElementById('menu-button');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            const themeToggle = document.getElementById('theme-toggle');
+            const searchBar = document.getElementById('search-bar');
+            const homeScreen = document.getElementById('home-screen');
+            const searchResultsPage = document.getElementById('search-results-page');
+            // Modal and Shortcut elements
+            const addShortcutButton = document.getElementById('add-shortcut-button');
+            const modalOverlay = document.getElementById('add-site-modal');
+            const cancelModalButton = document.getElementById('cancel-modal-button');
+            const addSiteForm = document.getElementById('add-site-form');
+            const shortcutsContainer = document.getElementById('shortcuts-container');
+            const siteNameInput = document.getElementById('site-name-input');
+            const siteUrlInput = document.getElementById('site-url-input');
+
+            // --- NEW: THEME MANAGEMENT ---
+
+            /**
+             * Applies the selected theme by adding/removing the 'dark-theme' class on the body.
+             * @param {string} theme - The theme to apply ('dark' or 'light').
+             */
+            const applyTheme = (theme) => {
+                if (theme === 'dark') {
+                    body.classList.add('dark-theme');
+                    themeToggle.checked = true;
+                } else {
+                    body.classList.remove('dark-theme');
+                    themeToggle.checked = false;
+                }
+            };
+
+            /**
+             * Toggles the theme, saves the preference to localStorage, and applies it.
+             */
+            const toggleTheme = () => {
+                const newTheme = themeToggle.checked ? 'dark' : 'light';
+                localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+                applyTheme(newTheme);
+            };
+
+            /**
+             * Initializes the theme based on localStorage or system preference.
+             * This runs immediately to prevent a flash of incorrect theme.
+             */
+            const initializeTheme = () => {
+                const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+                if (savedTheme) {
+                    applyTheme(savedTheme);
+                } else {
+                    // Fallback to system preference if no choice has been made
+                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                    applyTheme(prefersDark ? 'dark' : 'light');
+                }
+            };
+            
+            // Add event listener for the toggle switch
+            themeToggle.addEventListener('change', toggleTheme);
+            
+            // --- UI/PAGE NAVIGATION LOGIC ---
+
+            const showHomePage = () => {
+                homeScreen.classList.remove('hidden');
+                searchResultsPage.classList.add('hidden');
+                searchBar.value = '';
+                document.documentElement.scrollTop = 0;
+            };
+            
+            const showResultsPage = () => {
+                homeScreen.classList.add('hidden');
+                searchResultsPage.classList.remove('hidden');
+                document.documentElement.scrollTop = 0;
+            };
+
+            // --- HISTORY & BACK BUTTON MANAGEMENT ---
+            if (location.hash === '#results') {
+                history.replaceState({ page: 'home' }, '', window.location.pathname);
+            }
+            
+            window.addEventListener('popstate', (event) => {
+                if (!event.state || event.state.page !== 'results') {
+                    showHomePage();
+                }
+            });
+            
+            homeButton.addEventListener('click', () => {
+                history.pushState({ page: 'home' }, '', window.location.pathname);
+                showHomePage();
+            });
+
+            // --- CORE SEARCH FUNCTIONALITY ---
+
+            async function performSearch(query, type = 'all', page = 1) {
+                currentQuery = query;
+                currentSearchType = type;
+                currentPage = page;
+
+                if (history.state?.page !== 'results') {
+                    history.pushState({ page: 'results' }, '', '#results');
+                }
+                showResultsPage();
+
+                renderResultsPageStructure(query);
+
+                const apiUrl = buildApiUrl(query, type, page);
+                const requestUrl = `${CORS_PROXY_URL}${encodeURIComponent(apiUrl)}`;
+
+                try {
+                    const response = await fetch(requestUrl);
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    
+                    const data = await response.json();
+                    if (data.error) throw new Error(data.error);
+
+                    renderContent(data);
+                } catch (error) {
+                    console.error("Failed to fetch search results:", error);
+                    const contentArea = document.getElementById('results-content-area');
+                    if (contentArea) {
+                        contentArea.innerHTML = `<p style="text-align:center; padding: 20px;">Failed to load results. ${error.message}</p>`;
+                    }
+                }
+            }
+
+            function buildApiUrl(query, type, page) {
+                const encodedQuery = encodeURIComponent(query);
+                const start = (page - 1) * 100;
+                let url = `https://serpapi.com/search.json?q=${encodedQuery}&api_key=${SERP_API_KEY}&num=100&start=${start}`;
+                if (type === 'images') url += '&tbm=isch';
+                if (type === 'videos') url += '&tbm=vid';
+                return url;
+            }
+            
+            searchBar.addEventListener('keydown', (event) => {
+                if (event.key === 'Enter') {
+                    const query = searchBar.value.trim();
+                    if (query) performSearch(query, 'all', 1);
+                }
+            });
+
+            // --- DYNAMIC RENDERING FOR RESULTS PAGE ---
+
+            function renderResultsPageStructure(query) {
+                searchResultsPage.innerHTML = `
+                    <div class="fixed-results-header">
+                        <input type="search" id="results-search-bar" class="search-bar" value="${escapeHTML(query)}">
+                    </div>
+                    <div class="results-header-tabs">
+                        <div class="filter-tabs-container">
+                            <div class="filter-tab ${currentSearchType === 'all' ? 'active' : ''}" data-type="all">All</div>
+                            <div class="filter-tab ${currentSearchType === 'images' ? 'active' : ''}" data-type="images">Images</div>
+                            <div class="filter-tab ${currentSearchType === 'videos' ? 'active' : ''}" data-type="videos">Videos</div>
+                        </div>
+                    </div>
+                    <div class="results-content-area" id="results-content-area">
+                        <div class="loader"></div>
+                    </div>
+                `;
+
+                document.getElementById('results-search-bar').addEventListener('keydown', handleResultsSearch);
+                document.querySelectorAll('.filter-tab').forEach(tab => tab.addEventListener('click', handleTabClick));
+            }
+
+            function renderContent(data) {
+                const container = document.getElementById('results-content-area');
+                if (!container) return;
+                
+                // Clear previous classes like 'image-results-grid'
+                container.className = 'results-content-area';
+
+                switch(currentSearchType) {
+                    case 'images':
+                        renderImageResults(data.images_results, container);
+                        break;
+                    case 'videos':
+                        renderVideoResults(data.video_results, container);
+                        break;
+                    default:
+                        renderOrganicResults(data.organic_results, container);
+                        break;
+                }
+                renderPagination(data, container);
+            }
+
+            function renderOrganicResults(results, container) {
+                if (!results || results.length === 0) {
+                    container.innerHTML = '<p>No web results found.</p>'; return;
+                }
+                const html = results.map(item => {
+                    let domain = '';
+                    try { domain = new URL(item.link).hostname; } catch (e) { domain = item.displayed_link.split(' ')[0]; }
+                    return `
+                    <div class="organic-result-item">
+                        <a href="${item.link}" target="_blank">
+                            <div class="organic-result-header">
+                                <img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy">
+                                <span class="organic-result-link">${item.displayed_link}</span>
+                            </div>
+                            <h3 class="organic-result-title">${item.title}</h3>
+                        </a>
+                        <p class="organic-result-snippet">${item.snippet || ''}</p>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html;
+            }
+
+            /**
+             * IMPROVED: Renders image results in a grid with source website info.
+             */
+            function renderImageResults(results, container) {
+                if (!results || results.length === 0) {
+                    container.innerHTML = '<p>No image results found.</p>'; return;
+                }
+                container.classList.add('image-results-grid');
+                const html = results.map(item => {
+                    let domain = '';
+                    try { domain = new URL(item.link).hostname; } catch (e) { /* fallback if link is invalid */ }
+                    return `
+                    <div class="image-result-item">
+                        <a href="${item.original}" target="_blank" class="image-container">
+                            <img src="${item.thumbnail}" alt="${escapeHTML(item.title)}" class="main-image" loading="lazy">
+                        </a>
+                        <a href="${item.link}" target="_blank" class="image-source-info">
+                            <img src="https://www.google.com/s2/favicons?sz=16&domain=${domain}" class="favicon" alt="" loading="lazy">
+                            <span class="image-source-name">${item.source}</span>
+                        </a>
+                    </div>`;
+                }).join('');
+                container.innerHTML = html;
+            }
+            
+            function renderVideoResults(results, container) {
+                if (!results || results.length === 0) {
+                    container.innerHTML = '<p>No video results found.</p>'; return;
+                }
+                const html = results.map(item => `
+                    <div class="video-result-item">
+                       <a href="${item.link}" target="_blank">
+                           <div class="video-thumbnail-container">
+                               <img src="${item.thumbnail}" class="video-thumbnail" loading="lazy">
+                               ${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}
+                           </div>
+                           <div class="video-info">
+                               <div class="video-title">${item.title}</div>
+                               <div class="video-source">${item.source} &middot; ${item.published_date || ''}</div>
+                           </div>
+                       </a>
+                    </div>`).join('');
+                container.innerHTML = html;
+            }
+
+            function renderPagination(data, container) {
+                const paginationData = data.serpapi_pagination;
+                if (!paginationData) return;
+                const hasPrev = currentPage > 1;
+                const hasNext = paginationData.next;
+                const paginationHTML = `
+                    <div class="pagination-controls">
+                        <button id="prev-page-btn" class="pagination-button" ${!hasPrev ? 'disabled' : ''}>Previous</button>
+                        <span>Page ${currentPage}</span>
+                        <button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button>
+                    </div>`;
+                container.insertAdjacentHTML('beforeend', paginationHTML);
+
+                if (hasPrev) {
+                    document.getElementById('prev-page-btn').addEventListener('click', () => performSearch(currentQuery, currentSearchType, currentPage - 1));
+                }
+                if (hasNext) {
+                    document.getElementById('next-page-btn').addEventListener('click', () => performSearch(currentQuery, currentSearchType, currentPage + 1));
+                }
+            }
+            
+            // --- EVENT HANDLERS FOR DYNAMIC ELEMENTS ---
+            function handleResultsSearch(event) {
+                if (event.key === 'Enter') {
+                    const query = event.target.value.trim();
+                    if (query && query !== currentQuery) performSearch(query, 'all', 1);
+                }
+            }
+
+            function handleTabClick(event) {
+                const type = event.currentTarget.dataset.type;
+                if (type !== currentSearchType) performSearch(currentQuery, type, 1);
+            }
+
+            // --- UTILITY FUNCTIONS ---
+            function escapeHTML(str) {
+                return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]);
+            }
+            
+            // --- MENU, MODAL, SHORTCUTS LOGIC (Unchanged) ---
+            const toggleMenu = () => dropdownMenu.classList.toggle('show');
+            menuButton.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
+            window.addEventListener('click', e => { if (dropdownMenu.classList.contains('show') && !dropdownMenu.contains(e.target) && e.target !== menuButton) { toggleMenu(); }});
+            const showModal = () => modalOverlay.classList.add('show');
+            const hideModal = () => { modalOverlay.classList.remove('show'); addSiteForm.reset(); };
+            addShortcutButton.addEventListener('click', showModal);
+            cancelModalButton.addEventListener('click', hideModal);
+            modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
+            const getShortcuts = () => JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY)) || [];
+            const saveShortcuts = shortcuts => localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
+            const renderShortcuts = () => {
+                const existingShortcuts = shortcutsContainer.querySelectorAll('.shortcut-item:not(#add-shortcut-button)');
+                existingShortcuts.forEach(sc => sc.remove());
+                getShortcuts().forEach(shortcut => {
+                    const shortcutElement = createShortcutElement(shortcut.name, shortcut.url);
+                    shortcutsContainer.insertBefore(shortcutElement, addShortcutButton);
+                });
+            };
+            const createShortcutElement = (name, url) => {
+                const shortcutLink = document.createElement('a');
+                shortcutLink.href = url;
+                shortcutLink.className = 'shortcut-item';
+                shortcutLink.title = name;
+                const iconDiv = document.createElement('div');
+                iconDiv.className = 'shortcut-icon';
+                const nameP = document.createElement('p');
+                nameP.className = 'shortcut-name';
+                nameP.textContent = name;
+                try {
+                    const hostname = new URL(url).hostname;
+                    const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
+                    const img = new Image();
+                    img.src = faviconUrl;
+                    img.onload = () => { iconDiv.innerHTML = ''; iconDiv.appendChild(img); };
+                    img.onerror = () => { iconDiv.textContent = name.charAt(0).toUpperCase(); };
+                } catch (error) {
+                    console.error("Error creating favicon URL:", error);
+                    iconDiv.textContent = name.charAt(0).toUpperCase();
+                }
+                shortcutLink.appendChild(iconDiv);
+                shortcutLink.appendChild(nameP);
+                return shortcutLink;
+            };
+            addSiteForm.addEventListener('submit', e => {
+                e.preventDefault();
+                const name = siteNameInput.value.trim();
+                let url = siteUrlInput.value.trim();
+                if (name && url) {
+                    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                    const shortcuts = getShortcuts();
+                    shortcuts.push({ name, url });
+                    saveShortcuts(shortcuts);
+                    renderShortcuts();
+                    hideModal();
+                }
+            });
+
+            // --- INITIAL LOAD ---
+            initializeTheme(); // Set the theme first
+            renderShortcuts(); // Then render UI elements
+        });
+    </script>
+</body>
+</html>
