@@ -167,6 +167,28 @@
         .loader { border: 4px solid var(--search-bar-bg); border-top: 4px solid var(--button-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
+        /* --- FIX: FULL-SCREEN INSTANT LOADING ANIMATION --- */
+        .full-page-loader {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background-color: var(--background-color);
+            z-index: 9999;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader-spinner {
+            border: 5px solid var(--search-bar-bg);
+            border-top: 5px solid var(--button-color);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite; /* Reuses existing 'spin' animation */
+        }
+        
         /* Organic (All) Results */
         .organic-result-item { margin-bottom: 24px; }
         .organic-result-item a { text-decoration: none; }
@@ -200,9 +222,29 @@
         .pagination-button { padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 20px; background-color: transparent; color: var(--button-color); font-size: 14px; font-weight: 500; cursor: pointer; }
         .pagination-button:disabled { color: var(--secondary-text-color); cursor: not-allowed; border-color: var(--search-bar-bg); }
 
-        /* --- NEW: Exit Toast Message --- */
-        .toast-message { position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%); background-color: var(--toast-bg); color: var(--toast-text-color); padding: 12px 24px; border-radius: 24px; font-size: 14px; z-index: 3000; opacity: 0; transition: opacity 0.3s ease, bottom 0.3s ease; pointer-events: none; }
-        .toast-message.show { opacity: 1; bottom: 40px; }
+        /* --- FIX: GPU-ACCELERATED Toast Message --- */
+        .toast-message {
+            position: fixed;
+            bottom: 40px; /* Final vertical position */
+            left: 50%;
+            background-color: var(--toast-bg);
+            color: var(--toast-text-color);
+            padding: 12px 24px;
+            border-radius: 24px;
+            font-size: 14px;
+            z-index: 3000;
+            opacity: 0;
+            /* Start slightly lower and invisible */
+            transform: translate(-50%, 10px);
+            /* Animate transform and opacity for GPU acceleration */
+            transition: opacity 0.3s ease, transform 0.3s ease;
+            pointer-events: none;
+        }
+        .toast-message.show {
+            opacity: 1;
+            /* Move to final centered position */
+            transform: translate(-50%, 0);
+        }
 
         /* --- NEW: Edit Shortcuts Page --- */
         #edit-shortcuts-page { padding-bottom: 20px; }
@@ -218,6 +260,11 @@
     </style>
 </head>
 <body>
+    <!-- FIX: FULL-SCREEN LOADER ELEMENT -->
+    <div id="full-page-loader" class="full-page-loader hidden">
+        <div class="loader-spinner"></div>
+    </div>
+    
     <div id="app-container">
         <main id="home-screen">
             <header class="app-header">
@@ -264,7 +311,6 @@
         
         <div id="search-results-page" class="hidden"></div>
 
-        <!-- NEW: Edit Shortcuts Page -->
         <main id="edit-shortcuts-page" class="hidden">
              <header class="page-header">
                 <button class="icon-button" id="edit-shortcuts-done-btn">
@@ -292,7 +338,6 @@
         </div>
     </div>
     
-    <!-- NEW: Toast message element -->
     <div class="toast-message" id="toast-message"></div>
 
     <script>
@@ -320,6 +365,8 @@
             const homeScreen = document.getElementById('home-screen');
             const searchResultsPage = document.getElementById('search-results-page');
             const editShortcutsPage = document.getElementById('edit-shortcuts-page');
+            // Loader
+            const fullPageLoader = document.getElementById('full-page-loader'); // FIX: Loader selection
             // Modal and Shortcut elements
             const addShortcutButton = document.getElementById('add-shortcut-button');
             const modalOverlay = document.getElementById('add-site-modal');
@@ -364,17 +411,17 @@
             // --- UI/PAGE NAVIGATION LOGIC ---
             const showPage = (pageToShow) => {
                 [homeScreen, searchResultsPage, editShortcutsPage].forEach(page => {
-                    if (page === pageToShow) {
-                        page.classList.remove('hidden');
-                    } else {
-                        page.classList.add('hidden');
-                    }
+                    page.classList.toggle('hidden', page !== pageToShow);
                 });
                 document.documentElement.scrollTop = 0;
                 backPressOnHome = false; // Reset exit confirmation on any navigation
             };
 
-            // --- NEW: ROBUST HISTORY & BACK BUTTON MANAGEMENT ---
+            // --- FIX: FULL-SCREEN LOADER CONTROLS ---
+            const showLoader = () => fullPageLoader.classList.remove('hidden');
+            const hideLoader = () => fullPageLoader.classList.add('hidden');
+
+            // --- FIX: ROBUST HISTORY & BACK BUTTON MANAGEMENT ---
             const showToast = (message) => {
                 toastMessage.textContent = message;
                 toastMessage.classList.add('show');
@@ -385,49 +432,54 @@
 
             window.addEventListener('popstate', (event) => {
                 const state = event.state;
-                if (!state || state.page === 'home') {
+                // If there's no state or it's the home page, show the home screen
+                if (!state || state.pageType === 'home') {
                     showPage(homeScreen);
                     if (backPressOnHome) {
-                        // This allows the default behavior, which might be closing the PWA
-                        // For a true app-like experience, a native wrapper would handle this better.
-                        window.close(); 
+                        window.close(); // Allow app to close on second press
                     } else {
                         backPressOnHome = true;
                         showToast("Press back again to exit");
                         setTimeout(() => { backPressOnHome = false; }, 2500);
-                        // Push the state back so the next back press is caught again
-                        history.pushState({ page: 'home' }, 'Home');
+                        // Push a new 'home' state so the next back press is caught again
+                        history.pushState({ pageType: 'home' }, 'Home', '#home');
                     }
-                } else if (state.page === 'results') {
-                    performSearch(state.query, state.type, state.page, true);
-                } else if (state.page === 'edit') {
+                } else if (state.pageType === 'results') {
+                    // This is the core fix. When navigating back to a results page,
+                    // show the loader and re-run the search for that state.
+                    showLoader();
+                    performSearch(state.query, state.type, state.pageNum, true);
+                } else if (state.pageType === 'edit') {
                     showPage(editShortcutsPage);
                     renderEditShortcutsList();
                 }
             });
 
             // Set initial state on load
-            history.replaceState({ page: 'home' }, 'Home');
+            history.replaceState({ pageType: 'home' }, 'Home', '#home');
 
             homeButton.addEventListener('click', () => {
-                // If on results page, go back. If already on home, do nothing.
-                if (!homeScreen.classList.contains('hidden')) return;
-                history.back();
+                if (homeScreen.classList.contains('hidden')) {
+                    history.back(); // Go back if not on home screen
+                }
             });
 
             // --- CORE SEARCH FUNCTIONALITY ---
-            async function performSearch(query, type = 'all', page = 1, isHistoryNavigation = false) {
+            async function performSearch(query, type = 'all', pageNum = 1, isHistoryNavigation = false) {
                 currentQuery = query;
                 currentSearchType = type;
-                currentPage = page;
+                currentPage = pageNum;
 
+                // FIX: Use a structured state object with distinct keys 'pageType' and 'pageNum'
+                // This prevents the key collision that caused the original back navigation bug.
                 if (!isHistoryNavigation) {
-                    history.pushState({ page: 'results', query, type, page }, `Search for ${query}`);
+                    history.pushState({ pageType: 'results', query, type, pageNum }, `Search for ${query}`);
                 }
+                
                 showPage(searchResultsPage);
                 renderResultsPageStructure(query);
 
-                const apiUrl = buildApiUrl(query, type, page);
+                const apiUrl = buildApiUrl(query, type, pageNum);
                 const requestUrl = `${CORS_PROXY_URL}${encodeURIComponent(apiUrl)}`;
                 
                 try {
@@ -441,12 +493,15 @@
                     console.error("Failed to fetch search results:", error);
                     const contentArea = document.getElementById('results-content-area');
                     if (contentArea) contentArea.innerHTML = `<p style="text-align:center; padding: 20px;">Failed to load results. ${error.message}</p>`;
+                } finally {
+                    // FIX: Always hide the full-screen loader after the operation completes.
+                    hideLoader();
                 }
             }
 
-            function buildApiUrl(query, type, page) {
+            function buildApiUrl(query, type, pageNum) {
                 const encodedQuery = encodeURIComponent(query);
-                const start = (page - 1) * 10; // Standard pagination is 10
+                const start = (pageNum - 1) * 10;
                 let url = `https://serpapi.com/search.json?q=${encodedQuery}&api_key=${SERP_API_KEY}&start=${start}`;
                 if (type === 'images') url += '&tbm=isch';
                 if (type === 'videos') url += '&tbm=vid';
@@ -456,7 +511,11 @@
             searchBar.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
                     const query = searchBar.value.trim();
-                    if (query) performSearch(query, 'all', 1);
+                    if (query) {
+                        // FIX: Show loader immediately on user action for better UX
+                        showLoader();
+                        performSearch(query, 'all', 1);
+                    }
                 }
             });
 
@@ -474,6 +533,7 @@
                         </div>
                     </div>
                     <div class="results-content-area" id="results-content-area">
+                        <!-- A smaller inline loader is still useful for tab switches -->
                         <div class="loader"></div>
                     </div>
                 `;
@@ -484,7 +544,7 @@
             function renderContent(data) {
                 const container = document.getElementById('results-content-area');
                 if (!container) return;
-                container.className = 'results-content-area';
+                container.className = 'results-content-area'; // Reset class name
                 switch(currentSearchType) {
                     case 'images': renderImageResults(data.images_results, container); break;
                     case 'videos': renderVideoResults(data.video_results, container); break;
@@ -502,6 +562,7 @@
                     <div class="organic-result-item">
                         <a href="${item.link}" target="_blank">
                             <div class="organic-result-header">
+                                <!-- FIX: lazy loading improves performance by loading images only when needed -->
                                 <img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'">
                                 <span class="organic-result-link">${item.displayed_link}</span>
                             </div>
@@ -564,24 +625,33 @@
                         <button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button>
                     </div>`;
                 container.insertAdjacentHTML('beforeend', paginationHTML);
-                if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => performSearch(currentQuery, currentSearchType, currentPage - 1));
-                if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => performSearch(currentQuery, currentSearchType, currentPage + 1));
+                // FIX: Show loader on pagination clicks for a consistent experience
+                if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => {
+                    showLoader();
+                    performSearch(currentQuery, currentSearchType, currentPage - 1);
+                });
+                if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => {
+                    showLoader();
+                    performSearch(currentQuery, currentSearchType, currentPage + 1);
+                });
             }
             
             // --- EVENT HANDLERS FOR DYNAMIC ELEMENTS ---
             function handleResultsSearch(event) {
                 if (event.key === 'Enter') {
                     const query = event.target.value.trim();
-                    if (query && query !== currentQuery) performSearch(query, 'all', 1);
+                    if (query && query !== currentQuery) {
+                        showLoader();
+                        performSearch(query, 'all', 1);
+                    }
                 }
             }
 
             function handleTabClick(event) {
                 const type = event.currentTarget.dataset.type;
                 if (type !== currentSearchType) {
-                    // Instantly show loader for better UX
-                    const container = document.getElementById('results-content-area');
-                    if (container) container.innerHTML = '<div class="loader"></div>';
+                    // Switching tabs doesn't need a full-screen loader, the inline one is sufficient
+                    // as the user is already on the results page.
                     performSearch(currentQuery, type, 1);
                 }
             }
@@ -650,7 +720,7 @@
                 }
             });
 
-            // --- NEW: EDIT SHORTCUTS FUNCTIONALITY ---
+            // --- EDIT SHORTCUTS FUNCTIONALITY ---
             const renderEditShortcutsList = () => {
                 editShortcutsList.innerHTML = '';
                 const shortcuts = getShortcuts();
@@ -675,7 +745,7 @@
             };
 
             editShortcutsButton.addEventListener('click', () => {
-                history.pushState({ page: 'edit' }, 'Edit Shortcuts');
+                history.pushState({ pageType: 'edit' }, 'Edit Shortcuts');
                 showPage(editShortcutsPage);
                 renderEditShortcutsList();
                 dropdownMenu.classList.remove('show');
@@ -691,8 +761,8 @@
                     let shortcuts = getShortcuts();
                     shortcuts.splice(index, 1);
                     saveShortcuts(shortcuts);
-                    renderShortcuts(); // Update home screen
-                    renderEditShortcutsList(); // Update current screen
+                    renderShortcuts();
+                    renderEditShortcutsList();
                 }
             });
 
