@@ -29,6 +29,10 @@
             --toast-bg: rgba(32, 33, 36, 0.9);
             --toast-text-color: #FFFFFF;
             --delete-icon-bg: rgba(255, 0, 0, 0.7);
+
+            /* NEW: Header height variable for easier layout management */
+            --header-height: 120px; 
+            --header-icons-height: 56px;
         }
 
         /* Dark Theme class applied to <body> */
@@ -69,13 +73,23 @@
             display: none !important;
         }
 
-        /* --- Main App Header (Home Screen Only) --- */
-        .app-header {
+        /* --- NEW: Persistent Universal Header --- */
+        .universal-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--background-color);
+            z-index: 1100;
+            box-shadow: 0 1px 2px var(--shadow-color);
+        }
+
+        .header-top-row {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 16px;
-            background-color: var(--background-color);
+            padding: 0 16px;
+            height: var(--header-icons-height);
         }
 
         .header-icons {
@@ -83,35 +97,39 @@
             align-items: center;
             gap: 20px;
         }
+        
+        .icon-button { font-size: 24px; cursor: pointer; color: var(--text-color); background: none; border: none; display: flex; align-items: center; justify-content: center; padding: 4px; }
+        .icon-button svg { fill: var(--text-color); }
+        .tab-switcher { font-size: 14px; font-weight: 500; border: 2px solid var(--secondary-text-color); border-radius: 6px; padding: 2px 8px; min-width: 28px; text-align: center; }
 
-        .icon-button {
-            font-size: 24px;
-            cursor: pointer;
-            color: var(--text-color);
-            background: none;
-            border: none;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            padding: 4px;
+        .header-search-row {
+            padding: 4px 16px 16px 16px;
+            position: relative; /* Anchor for suggestions box */
         }
         
-        .icon-button svg {
-            fill: var(--text-color);
-        }
+        .search-bar { width: 100%; padding: 14px 20px; font-size: 16px; border: none; border-radius: 28px; background-color: var(--search-bar-bg); color: var(--text-color); outline: none; }
+        .search-bar::placeholder { color: var(--secondary-text-color); }
 
-        .tab-switcher {
-            font-size: 14px;
-            font-weight: 500;
-            border: 2px solid var(--secondary-text-color);
-            border-radius: 6px;
-            padding: 2px 8px;
-            min-width: 28px;
-            text-align: center;
+        /* --- NEW: Auto-Suggest Search Box --- */
+        .suggestions-box {
+            display: none; /* Hidden by default */
+            position: absolute;
+            top: 95%; /* Position just below the search bar */
+            left: 16px;
+            right: 16px;
+            background-color: var(--dropdown-bg);
+            border-radius: 12px;
+            box-shadow: 0 4px 10px var(--shadow-color);
+            max-height: 300px;
+            overflow-y: auto;
+            z-index: 10;
         }
+        .suggestions-box ul { list-style: none; }
+        .suggestions-box li { padding: 12px 20px; cursor: pointer; font-size: 16px; color: var(--dropdown-text-color); }
+        .suggestions-box li:hover { background-color: var(--dropdown-hover-bg); }
 
         /* --- Dropdown Menu --- */
-        .dropdown-menu { display: none; position: fixed; top: 60px; right: 10px; background-color: var(--dropdown-bg); color: var(--dropdown-text-color); border-radius: 12px; box-shadow: 0 4px 10px var(--shadow-color); width: 280px; z-index: 1001; overflow: hidden; animation: fadeIn 0.15s ease-out; }
+        .dropdown-menu { display: none; position: fixed; top: 60px; right: 10px; background-color: var(--dropdown-bg); color: var(--dropdown-text-color); border-radius: 12px; box-shadow: 0 4px 10px var(--shadow-color); width: 280px; z-index: 1200; overflow: hidden; animation: fadeIn 0.15s ease-out; }
         .dropdown-menu.show { display: block; }
         .dropdown-menu ul { list-style: none; }
         .dropdown-menu ul li { display: flex; align-items: center; padding: 12px 16px; font-size: 16px; cursor: pointer; }
@@ -120,7 +138,17 @@
         .dropdown-menu-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- Dark Mode Toggle Switch --- */
+        /* --- NEW: Menu Item Specific Styles --- */
+        .desktop-site-option { justify-content: space-between; }
+        .desktop-site-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
+        .desktop-site-toggle input { opacity: 0; width: 0; height: 0; }
+        .desktop-site-toggle .toggle-slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 24px; }
+        .desktop-site-toggle .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
+        .desktop-site-toggle input:checked + .toggle-slider { background-color: var(--button-color); }
+        .desktop-site-toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
+
+
+        /* --- Dark Mode Toggle Switch (reused for desktop site) --- */
         .theme-switch-wrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         .theme-switch { position: relative; display: inline-block; width: 44px; height: 24px; }
         .theme-switch input { opacity: 0; width: 0; height: 0; }
@@ -129,13 +157,13 @@
         input:checked + .slider { background-color: var(--button-color); }
         input:checked + .slider:before { transform: translateX(20px); }
 
-        /* --- Main Home Screen Content --- */
-        #home-screen { padding-bottom: 20px; }
-        .search-container { padding: 16px; text-align: center; }
-        .search-bar { width: 100%; padding: 14px 20px; font-size: 16px; border: none; border-radius: 28px; background-color: var(--search-bar-bg); color: var(--text-color); outline: none; }
-        .search-bar::placeholder { color: var(--secondary-text-color); }
-
-        /* --- Shortcut Area --- */
+        /* --- Page Content Layout --- */
+        /* All main content areas need padding to avoid being hidden by the fixed header */
+        #home-screen, #search-results-page, #edit-shortcuts-page {
+            padding-top: var(--header-height);
+        }
+        
+        /* --- Home Screen Content --- */
         .shortcuts-container { padding: 16px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px; justify-items: center; }
         .shortcut-item { display: flex; flex-direction: column; align-items: center; text-align: center; cursor: pointer; text-decoration: none; width: 80px; }
         .shortcut-icon { width: 52px; height: 52px; border-radius: 50%; background-color: var(--shortcut-icon-bg); display: flex; justify-content: center; align-items: center; font-size: 24px; font-weight: 500; color: var(--text-color); background-size: cover; background-position: center; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); position: relative; }
@@ -156,38 +184,22 @@
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Search Results Page Styles --- */
-        #search-results-page { padding-top: 120px; }
-        .fixed-results-header { position: fixed; top: 0; left: 0; width: 100%; padding: 12px 16px; background-color: var(--background-color); z-index: 1000; box-shadow: 0 2px 4px var(--shadow-color); }
-        .results-header-tabs { position: fixed; top: 68px; left: 0; width: 100%; padding: 0 16px; border-bottom: 1px solid var(--border-color); background-color: var(--background-color); z-index: 999; }
+        /* Adjustment: padding-top is now on the main container, not individual elements */
+        #search-results-page { padding-top: var(--header-icons-height); }
+        
+        .fixed-results-header { position: fixed; top: var(--header-icons-height); left: 0; width: 100%; padding: 12px 16px; background-color: var(--background-color); z-index: 1000; box-shadow: 0 2px 4px var(--shadow-color); }
+        .results-header-tabs { position: fixed; top: calc(var(--header-icons-height) + 68px); left: 0; width: 100%; padding: 0 16px; border-bottom: 1px solid var(--border-color); background-color: var(--background-color); z-index: 999; }
         .filter-tabs-container { display: flex; gap: 20px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
         .filter-tabs-container::-webkit-scrollbar { display: none; }
         .filter-tab { padding: 12px 4px; font-size: 14px; font-weight: 500; color: var(--secondary-text-color); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
         .filter-tab.active { color: var(--button-color); border-bottom-color: var(--button-color); }
-        .results-content-area { padding: 16px; }
+        .results-content-area { padding: 16px; padding-top: 130px; /* Space for both fixed headers */ }
         .loader { border: 4px solid var(--search-bar-bg); border-top: 4px solid var(--button-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- FIX: FULL-SCREEN INSTANT LOADING ANIMATION --- */
-        .full-page-loader {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100vw;
-            height: 100vh;
-            background-color: var(--background-color);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-        }
-        .loader-spinner {
-            border: 5px solid var(--search-bar-bg);
-            border-top: 5px solid var(--button-color);
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            animation: spin 1s linear infinite; /* Reuses existing 'spin' animation */
-        }
+        .full-page-loader { position: fixed; top: 0; left: 0; width: 100vw; height: 100vh; background-color: var(--background-color); z-index: 9999; display: flex; justify-content: center; align-items: center; }
+        .loader-spinner { border: 5px solid var(--search-bar-bg); border-top: 5px solid var(--button-color); border-radius: 50%; width: 50px; height: 50px; animation: spin 1s linear infinite; }
         
         /* Organic (All) Results */
         .organic-result-item { margin-bottom: 24px; }
@@ -198,10 +210,10 @@
         .organic-result-title { font-size: 20px; color: var(--link-color); font-weight: 400; margin-bottom: 6px; }
         .organic-result-snippet { font-size: 14px; color: var(--secondary-text-color); line-height: 1.5; }
 
-        /* --- IMPROVED: Image Results --- */
+        /* IMPROVED: Image Results */
         .image-results-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 12px; }
         .image-result-item { display: flex; flex-direction: column; text-decoration: none; }
-        .image-result-item .image-container { position: relative; width: 100%; padding-bottom: 100%; /* Square aspect ratio */ overflow: hidden; border-radius: 12px; margin-bottom: 8px; background-color: var(--shortcut-icon-bg);}
+        .image-result-item .image-container { position: relative; width: 100%; padding-bottom: 100%; overflow: hidden; border-radius: 12px; margin-bottom: 8px; background-color: var(--shortcut-icon-bg);}
         .image-result-item img.main-image { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; }
         .image-title { font-size: 13px; color: var(--text-color); line-height: 1.4; margin-bottom: 6px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .image-source-info { display: flex; align-items: center; gap: 6px; text-decoration: none; }
@@ -222,37 +234,17 @@
         .pagination-button { padding: 10px 24px; border: 1px solid var(--border-color); border-radius: 20px; background-color: transparent; color: var(--button-color); font-size: 14px; font-weight: 500; cursor: pointer; }
         .pagination-button:disabled { color: var(--secondary-text-color); cursor: not-allowed; border-color: var(--search-bar-bg); }
 
-        /* --- FIX: GPU-ACCELERATED Toast Message --- */
-        .toast-message {
-            position: fixed;
-            bottom: 40px; /* Final vertical position */
-            left: 50%;
-            background-color: var(--toast-bg);
-            color: var(--toast-text-color);
-            padding: 12px 24px;
-            border-radius: 24px;
-            font-size: 14px;
-            z-index: 3000;
-            opacity: 0;
-            /* Start slightly lower and invisible */
-            transform: translate(-50%, 10px);
-            /* Animate transform and opacity for GPU acceleration */
-            transition: opacity 0.3s ease, transform 0.3s ease;
-            pointer-events: none;
-        }
-        .toast-message.show {
-            opacity: 1;
-            /* Move to final centered position */
-            transform: translate(-50%, 0);
-        }
+        /* FIX: GPU-ACCELERATED Toast Message */
+        .toast-message { position: fixed; bottom: 40px; left: 50%; background-color: var(--toast-bg); color: var(--toast-text-color); padding: 12px 24px; border-radius: 24px; font-size: 14px; z-index: 3000; opacity: 0; transform: translate(-50%, 10px); transition: opacity 0.3s ease, transform 0.3s ease; pointer-events: none; }
+        .toast-message.show { opacity: 1; transform: translate(-50%, 0); }
 
-        /* --- NEW: Edit Shortcuts Page --- */
-        #edit-shortcuts-page { padding-bottom: 20px; }
+        /* NEW: Edit Shortcuts Page */
+        #edit-shortcuts-page { padding-top: var(--header-icons-height); } /* Adjusted for fixed header */
         .page-header { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color); }
         .page-header h2 { font-size: 20px; font-weight: 500; margin-left: 16px; }
         .edit-shortcuts-list { padding: 8px 16px; }
         .edit-shortcut-item { display: flex; align-items: center; padding: 12px 0; }
-        .edit-shortcut-item .shortcut-icon { margin: 0; } /* Reuse shortcut icon style */
+        .edit-shortcut-item .shortcut-icon { margin: 0; }
         .edit-shortcut-info { flex-grow: 1; margin-left: 16px; }
         .edit-shortcut-name { font-size: 16px; color: var(--text-color); }
         .edit-shortcut-url { font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -260,14 +252,15 @@
     </style>
 </head>
 <body>
-    <!-- FIX: FULL-SCREEN LOADER ELEMENT -->
+    <!-- Full-screen loader for initial searches and page transitions -->
     <div id="full-page-loader" class="full-page-loader hidden">
         <div class="loader-spinner"></div>
     </div>
     
     <div id="app-container">
-        <main id="home-screen">
-            <header class="app-header">
+        <!-- FEATURE: Persistent Universal Header -->
+        <header class="universal-header">
+            <div class="header-top-row">
                 <button class="icon-button" id="home-button">
                     <svg xmlns="http://www.w3.org/2000/svg" height="24" viewBox="0 0 24 24" width="24"><path d="M0 0h24v24H0z" fill="none"/><path d="M12 5.69l5 4.5V18h-2v-6H9v6H7v-7.81l5-4.5M12 3L2 12h3v8h6v-6h2v6h6v-8h3L12 3z"/></svg>
                 </button>
@@ -275,32 +268,52 @@
                     <div class="tab-switcher" id="tab-count">1</div>
                     <button class="icon-button" id="menu-button">⋮</button>
                 </div>
-            </header>
+            </div>
+            <div class="header-search-row" id="header-search-row">
+                <input type="search" id="search-bar" class="search-bar" placeholder="Search or type web address" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
+                <!-- FEATURE: Auto-Suggest Search Box container -->
+                <div id="suggestions-box" class="suggestions-box"></div>
+            </div>
+        </header>
 
-            <div class="dropdown-menu" id="dropdown-menu">
-                <ul>
-                    <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>New Tab</li>
-                    <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</li>
-                    <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
-                    <div class="dropdown-menu-divider"></div>
-                    <!-- NEW: Edit Shortcuts Option -->
-                    <li id="edit-shortcuts-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit Shortcuts</li>
-                    <div class="dropdown-menu-divider"></div>
-                    <li>
-                        <div class="theme-switch-wrapper">
-                            <span>Dark Mode</span>
-                            <label class="theme-switch">
-                                <input type="checkbox" id="theme-toggle">
-                                <span class="slider"></span>
-                            </label>
-                        </div>
-                    </li>
-                </ul>
-            </div>
-            
-            <div class="search-container">
-                <input type="search" id="search-bar" class="search-bar" placeholder="Search or type web address" autocomplete="off">
-            </div>
+        <!-- The dropdown menu is outside the header to ensure it has the highest z-index -->
+        <div class="dropdown-menu" id="dropdown-menu">
+            <ul>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>New Tab</li>
+                <!-- FEATURE: New 'Share' Menu Item (Design only) -->
+                <li id="share-button">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg>
+                    Share
+                </li>
+                <div class="dropdown-menu-divider"></div>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</li>
+                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
+                <div class="dropdown-menu-divider"></div>
+                <!-- FEATURE: New 'Desktop Site' Menu Item (Design only) -->
+                <li id="desktop-site-button" class="desktop-site-option">
+                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
+                    <span>Desktop site</span>
+                    <label class="desktop-site-toggle">
+                        <input type="checkbox">
+                        <span class="toggle-slider"></span>
+                    </label>
+                </li>
+                <li id="edit-shortcuts-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit Shortcuts</li>
+                <div class="dropdown-menu-divider"></div>
+                <li>
+                    <div class="theme-switch-wrapper">
+                        <span>Dark Mode</span>
+                        <label class="theme-switch">
+                            <input type="checkbox" id="theme-toggle">
+                            <span class="slider"></span>
+                        </label>
+                    </div>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Page Content Area -->
+        <main id="home-screen">
             <div class="shortcuts-container" id="shortcuts-container">
                 <div class="shortcut-item" id="add-shortcut-button">
                     <div class="shortcut-icon">+</div>
@@ -318,12 +331,11 @@
                 </button>
                 <h2>Edit Shortcuts</h2>
             </header>
-            <div class="edit-shortcuts-list" id="edit-shortcuts-list">
-                <!-- Shortcuts will be dynamically inserted here -->
-            </div>
+            <div class="edit-shortcuts-list" id="edit-shortcuts-list"></div>
         </main>
     </div>
 
+    <!-- Modals and Toasts -->
     <div class="modal-overlay" id="add-site-modal">
         <div class="modal-content">
             <h2>Add shortcut</h2>
@@ -345,7 +357,8 @@
             // --- CONSTANTS & CONFIGURATION ---
             const SHORTCUTS_STORAGE_KEY = 'browserHomePageShortcuts';
             const THEME_STORAGE_KEY = 'browserThemePreference';
-            const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284';
+            // User-provided SerpApi Key
+            const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284'; 
             const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
             
             // --- GLOBAL STATE ---
@@ -353,6 +366,7 @@
             let currentPage = 1;
             let currentSearchType = 'all';
             let backPressOnHome = false;
+            let suggestionDebounceTimer;
 
             // --- DOM ELEMENT SELECTIONS ---
             const body = document.body;
@@ -361,12 +375,13 @@
             const dropdownMenu = document.getElementById('dropdown-menu');
             const themeToggle = document.getElementById('theme-toggle');
             const searchBar = document.getElementById('search-bar');
+            const headerSearchRow = document.getElementById('header-search-row');
+            const suggestionsBox = document.getElementById('suggestions-box');
             // Page containers
             const homeScreen = document.getElementById('home-screen');
             const searchResultsPage = document.getElementById('search-results-page');
             const editShortcutsPage = document.getElementById('edit-shortcuts-page');
-            // Loader
-            const fullPageLoader = document.getElementById('full-page-loader'); // FIX: Loader selection
+            const fullPageLoader = document.getElementById('full-page-loader');
             // Modal and Shortcut elements
             const addShortcutButton = document.getElementById('add-shortcut-button');
             const modalOverlay = document.getElementById('add-site-modal');
@@ -379,18 +394,12 @@
             const editShortcutsButton = document.getElementById('edit-shortcuts-button');
             const editShortcutsDoneBtn = document.getElementById('edit-shortcuts-done-btn');
             const editShortcutsList = document.getElementById('edit-shortcuts-list');
-            // Toast
             const toastMessage = document.getElementById('toast-message');
 
             // --- THEME MANAGEMENT ---
             const applyTheme = (theme) => {
-                if (theme === 'dark') {
-                    body.classList.add('dark-theme');
-                    themeToggle.checked = true;
-                } else {
-                    body.classList.remove('dark-theme');
-                    themeToggle.checked = false;
-                }
+                if (theme === 'dark') { body.classList.add('dark-theme'); themeToggle.checked = true; } 
+                else { body.classList.remove('dark-theme'); themeToggle.checked = false; }
             };
             const toggleTheme = () => {
                 const newTheme = themeToggle.checked ? 'dark' : 'light';
@@ -399,9 +408,8 @@
             };
             const initializeTheme = () => {
                 const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-                if (savedTheme) {
-                    applyTheme(savedTheme);
-                } else {
+                if (savedTheme) applyTheme(savedTheme);
+                else {
                     const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
                     applyTheme(prefersDark ? 'dark' : 'light');
                 }
@@ -413,40 +421,37 @@
                 [homeScreen, searchResultsPage, editShortcutsPage].forEach(page => {
                     page.classList.toggle('hidden', page !== pageToShow);
                 });
+                
+                // FEATURE: Control visibility of the search bar in the universal header
+                // Show search bar only on the home screen.
+                headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen);
+                
                 document.documentElement.scrollTop = 0;
                 backPressOnHome = false; // Reset exit confirmation on any navigation
             };
 
-            // --- FIX: FULL-SCREEN LOADER CONTROLS ---
             const showLoader = () => fullPageLoader.classList.remove('hidden');
             const hideLoader = () => fullPageLoader.classList.add('hidden');
 
-            // --- FIX: ROBUST HISTORY & BACK BUTTON MANAGEMENT ---
             const showToast = (message) => {
                 toastMessage.textContent = message;
                 toastMessage.classList.add('show');
-                setTimeout(() => {
-                    toastMessage.classList.remove('show');
-                }, 2000);
+                setTimeout(() => { toastMessage.classList.remove('show'); }, 2000);
             };
 
+            // --- ROBUST HISTORY & BACK BUTTON MANAGEMENT ---
             window.addEventListener('popstate', (event) => {
                 const state = event.state;
-                // If there's no state or it's the home page, show the home screen
                 if (!state || state.pageType === 'home') {
                     showPage(homeScreen);
-                    if (backPressOnHome) {
-                        window.close(); // Allow app to close on second press
-                    } else {
+                    if (backPressOnHome) window.close();
+                    else {
                         backPressOnHome = true;
                         showToast("Press back again to exit");
                         setTimeout(() => { backPressOnHome = false; }, 2500);
-                        // Push a new 'home' state so the next back press is caught again
                         history.pushState({ pageType: 'home' }, 'Home', '#home');
                     }
                 } else if (state.pageType === 'results') {
-                    // This is the core fix. When navigating back to a results page,
-                    // show the loader and re-run the search for that state.
                     showLoader();
                     performSearch(state.query, state.type, state.pageNum, true);
                 } else if (state.pageType === 'edit') {
@@ -459,8 +464,62 @@
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
 
             homeButton.addEventListener('click', () => {
-                if (homeScreen.classList.contains('hidden')) {
-                    history.back(); // Go back if not on home screen
+                showPage(homeScreen);
+                history.pushState({ pageType: 'home' }, 'Home', '#home');
+            });
+
+            // --- FEATURE: AUTO-SUGGEST SEARCH BAR ---
+            async function getSuggestions(query) {
+                if (!query) {
+                    hideSuggestions();
+                    return;
+                }
+                // Using Google's suggestion API. It's generally open and doesn't require a proxy.
+                const url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`;
+                try {
+                    const response = await fetch(url);
+                    const data = await response.json();
+                    renderSuggestions(data[1]); // The second item in the array is the list of suggestions
+                } catch (error) {
+                    console.error("Failed to fetch suggestions:", error);
+                    hideSuggestions();
+                }
+            }
+
+            function renderSuggestions(suggestions) {
+                if (!suggestions || suggestions.length === 0) {
+                    hideSuggestions();
+                    return;
+                }
+                const ul = document.createElement('ul');
+                suggestions.forEach(suggestion => {
+                    const li = document.createElement('li');
+                    li.textContent = suggestion;
+                    li.addEventListener('click', () => {
+                        searchBar.value = suggestion;
+                        hideSuggestions();
+                        showLoader();
+                        performSearch(suggestion);
+                    });
+                    ul.appendChild(li);
+                });
+                suggestionsBox.innerHTML = '';
+                suggestionsBox.appendChild(ul);
+                suggestionsBox.style.display = 'block';
+            }
+
+            const hideSuggestions = () => { suggestionsBox.style.display = 'none'; };
+
+            searchBar.addEventListener('input', () => {
+                clearTimeout(suggestionDebounceTimer);
+                suggestionDebounceTimer = setTimeout(() => {
+                    getSuggestions(searchBar.value.trim());
+                }, 200); // Debounce to prevent API calls on every keystroke
+            });
+            // Hide suggestions if user clicks elsewhere
+            document.addEventListener('click', (e) => {
+                if (!headerSearchRow.contains(e.target)) {
+                    hideSuggestions();
                 }
             });
 
@@ -470,8 +529,6 @@
                 currentSearchType = type;
                 currentPage = pageNum;
 
-                // FIX: Use a structured state object with distinct keys 'pageType' and 'pageNum'
-                // This prevents the key collision that caused the original back navigation bug.
                 if (!isHistoryNavigation) {
                     history.pushState({ pageType: 'results', query, type, pageNum }, `Search for ${query}`);
                 }
@@ -494,7 +551,6 @@
                     const contentArea = document.getElementById('results-content-area');
                     if (contentArea) contentArea.innerHTML = `<p style="text-align:center; padding: 20px;">Failed to load results. ${error.message}</p>`;
                 } finally {
-                    // FIX: Always hide the full-screen loader after the operation completes.
                     hideLoader();
                 }
             }
@@ -512,7 +568,7 @@
                 if (event.key === 'Enter') {
                     const query = searchBar.value.trim();
                     if (query) {
-                        // FIX: Show loader immediately on user action for better UX
+                        hideSuggestions();
                         showLoader();
                         performSearch(query, 'all', 1);
                     }
@@ -533,7 +589,6 @@
                         </div>
                     </div>
                     <div class="results-content-area" id="results-content-area">
-                        <!-- A smaller inline loader is still useful for tab switches -->
                         <div class="loader"></div>
                     </div>
                 `;
@@ -562,7 +617,6 @@
                     <div class="organic-result-item">
                         <a href="${item.link}" target="_blank">
                             <div class="organic-result-header">
-                                <!-- FIX: lazy loading improves performance by loading images only when needed -->
                                 <img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'">
                                 <span class="organic-result-link">${item.displayed_link}</span>
                             </div>
@@ -625,15 +679,8 @@
                         <button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button>
                     </div>`;
                 container.insertAdjacentHTML('beforeend', paginationHTML);
-                // FIX: Show loader on pagination clicks for a consistent experience
-                if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => {
-                    showLoader();
-                    performSearch(currentQuery, currentSearchType, currentPage - 1);
-                });
-                if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => {
-                    showLoader();
-                    performSearch(currentQuery, currentSearchType, currentPage + 1);
-                });
+                if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage - 1); });
+                if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage + 1); });
             }
             
             // --- EVENT HANDLERS FOR DYNAMIC ELEMENTS ---
@@ -650,16 +697,12 @@
             function handleTabClick(event) {
                 const type = event.currentTarget.dataset.type;
                 if (type !== currentSearchType) {
-                    // Switching tabs doesn't need a full-screen loader, the inline one is sufficient
-                    // as the user is already on the results page.
                     performSearch(currentQuery, type, 1);
                 }
             }
 
             // --- UTILITY FUNCTIONS ---
-            function escapeHTML(str) {
-                return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]);
-            }
+            function escapeHTML(str) { return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]); }
             
             // --- MENU, MODAL, SHORTCUTS LOGIC ---
             const toggleMenu = () => dropdownMenu.classList.toggle('show');
@@ -698,10 +741,7 @@
                     img.src = faviconUrl;
                     img.onload = () => { iconDiv.innerHTML = ''; iconDiv.appendChild(img); };
                     img.onerror = () => { iconDiv.textContent = name.charAt(0).toUpperCase(); };
-                } catch (error) {
-                    console.error("Error creating favicon URL:", error);
-                    iconDiv.textContent = name.charAt(0).toUpperCase();
-                }
+                } catch (error) { iconDiv.textContent = name.charAt(0).toUpperCase(); }
                 shortcutLink.appendChild(iconDiv);
                 shortcutLink.appendChild(nameP);
                 return shortcutLink;
@@ -751,9 +791,7 @@
                 dropdownMenu.classList.remove('show');
             });
 
-            editShortcutsDoneBtn.addEventListener('click', () => {
-                history.back();
-            });
+            editShortcutsDoneBtn.addEventListener('click', () => { history.back(); });
 
             editShortcutsList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-shortcut-btn')) {
