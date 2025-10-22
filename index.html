@@ -29,8 +29,6 @@
             --toast-bg: rgba(32, 33, 36, 0.9);
             --toast-text-color: #FFFFFF;
             --delete-icon-bg: rgba(255, 0, 0, 0.7);
-
-            /* NEW: Header height variable for easier layout management */
             --header-height: 120px; 
             --header-icons-height: 56px;
         }
@@ -73,7 +71,7 @@
             display: none !important;
         }
 
-        /* --- NEW: Persistent Universal Header --- */
+        /* --- Persistent Universal Header --- */
         .universal-header {
             position: fixed;
             top: 0;
@@ -92,21 +90,11 @@
             height: var(--header-icons-height);
         }
 
-        .header-icons {
-            display: flex;
-            align-items: center;
-            gap: 20px;
-        }
-        
+        .header-icons { display: flex; align-items: center; gap: 20px; }
         .icon-button { font-size: 24px; cursor: pointer; color: var(--text-color); background: none; border: none; display: flex; align-items: center; justify-content: center; padding: 4px; }
         .icon-button svg { fill: var(--text-color); }
         .tab-switcher { font-size: 14px; font-weight: 500; border: 2px solid var(--secondary-text-color); border-radius: 6px; padding: 2px 8px; min-width: 28px; text-align: center; }
-
-        .header-search-row {
-            padding: 4px 16px 16px 16px;
-            position: relative; /* Anchor for suggestions box */
-        }
-        
+        .header-search-row { padding: 4px 16px 16px 16px; position: relative; }
         .search-bar { width: 100%; padding: 14px 20px; font-size: 16px; border: none; border-radius: 28px; background-color: var(--search-bar-bg); color: var(--text-color); outline: none; }
         .search-bar::placeholder { color: var(--secondary-text-color); }
 
@@ -122,10 +110,11 @@
             box-shadow: 0 4px 10px var(--shadow-color);
             max-height: 300px;
             overflow-y: auto;
-            z-index: 10;
+            z-index: 1150;
         }
         .suggestions-box ul { list-style: none; }
-        .suggestions-box li { padding: 12px 20px; cursor: pointer; font-size: 16px; color: var(--dropdown-text-color); }
+        .suggestions-box li { padding: 12px 20px; cursor: pointer; font-size: 16px; color: var(--dropdown-text-color); border-bottom: 1px solid var(--border-color); }
+        .suggestions-box li:last-child { border-bottom: none; }
         .suggestions-box li:hover { background-color: var(--dropdown-hover-bg); }
 
         /* --- Dropdown Menu --- */
@@ -138,7 +127,7 @@
         .dropdown-menu-divider { height: 1px; background-color: var(--border-color); margin: 8px 0; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
 
-        /* --- NEW: Menu Item Specific Styles --- */
+        /* --- Menu Item Specific Styles --- */
         .desktop-site-option { justify-content: space-between; }
         .desktop-site-toggle { position: relative; display: inline-block; width: 44px; height: 24px; }
         .desktop-site-toggle input { opacity: 0; width: 0; height: 0; }
@@ -146,7 +135,6 @@
         .desktop-site-toggle .toggle-slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: white; transition: .4s; border-radius: 50%; }
         .desktop-site-toggle input:checked + .toggle-slider { background-color: var(--button-color); }
         .desktop-site-toggle input:checked + .toggle-slider:before { transform: translateX(20px); }
-
 
         /* --- Dark Mode Toggle Switch (reused for desktop site) --- */
         .theme-switch-wrapper { display: flex; justify-content: space-between; align-items: center; width: 100%; }
@@ -158,10 +146,7 @@
         input:checked + .slider:before { transform: translateX(20px); }
 
         /* --- Page Content Layout --- */
-        /* All main content areas need padding to avoid being hidden by the fixed header */
-        #home-screen, #search-results-page, #edit-shortcuts-page {
-            padding-top: var(--header-height);
-        }
+        #home-screen, #search-results-page, #edit-shortcuts-page { padding-top: var(--header-height); }
         
         /* --- Home Screen Content --- */
         .shortcuts-container { padding: 16px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px; justify-items: center; }
@@ -184,9 +169,6 @@
         @keyframes slideIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
 
         /* --- Search Results Page Styles --- */
-        /* Adjustment: padding-top is now on the main container, not individual elements */
-        #search-results-page { padding-top: var(--header-icons-height); }
-        
         .fixed-results-header { position: fixed; top: var(--header-icons-height); left: 0; width: 100%; padding: 12px 16px; background-color: var(--background-color); z-index: 1000; box-shadow: 0 2px 4px var(--shadow-color); }
         .results-header-tabs { position: fixed; top: calc(var(--header-icons-height) + 68px); left: 0; width: 100%; padding: 0 16px; border-bottom: 1px solid var(--border-color); background-color: var(--background-color); z-index: 999; }
         .filter-tabs-container { display: flex; gap: 20px; overflow-x: auto; -ms-overflow-style: none; scrollbar-width: none; }
@@ -194,7 +176,6 @@
         .filter-tab { padding: 12px 4px; font-size: 14px; font-weight: 500; color: var(--secondary-text-color); cursor: pointer; border-bottom: 3px solid transparent; white-space: nowrap; }
         .filter-tab.active { color: var(--button-color); border-bottom-color: var(--button-color); }
         .results-content-area { padding: 16px; padding-top: 130px; /* Space for both fixed headers */ }
-        .loader { border: 4px solid var(--search-bar-bg); border-top: 4px solid var(--button-color); border-radius: 50%; width: 40px; height: 40px; animation: spin 1s linear infinite; margin: 40px auto; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
 
         /* --- FIX: FULL-SCREEN INSTANT LOADING ANIMATION --- */
@@ -239,7 +220,7 @@
         .toast-message.show { opacity: 1; transform: translate(-50%, 0); }
 
         /* NEW: Edit Shortcuts Page */
-        #edit-shortcuts-page { padding-top: var(--header-icons-height); } /* Adjusted for fixed header */
+        #edit-shortcuts-page { padding-top: var(--header-icons-height); }
         .page-header { display: flex; align-items: center; padding: 16px; border-bottom: 1px solid var(--border-color); }
         .page-header h2 { font-size: 20px; font-weight: 500; margin-left: 16px; }
         .edit-shortcuts-list { padding: 8px 16px; }
@@ -258,7 +239,7 @@
     </div>
     
     <div id="app-container">
-        <!-- FEATURE: Persistent Universal Header -->
+        <!-- Persistent Universal Header -->
         <header class="universal-header">
             <div class="header-top-row">
                 <button class="icon-button" id="home-button">
@@ -276,28 +257,16 @@
             </div>
         </header>
 
-        <!-- The dropdown menu is outside the header to ensure it has the highest z-index -->
+        <!-- Dropdown menu -->
         <div class="dropdown-menu" id="dropdown-menu">
             <ul>
                 <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19 13h-6v6h-2v-6H5v-2h6V5h2v6h6v2z"/></svg>New Tab</li>
-                <!-- FEATURE: New 'Share' Menu Item (Design only) -->
-                <li id="share-button">
-                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg>
-                    Share
-                </li>
+                <li id="share-button"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg>Share</li>
                 <div class="dropdown-menu-divider"></div>
                 <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</li>
                 <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
                 <div class="dropdown-menu-divider"></div>
-                <!-- FEATURE: New 'Desktop Site' Menu Item (Design only) -->
-                <li id="desktop-site-button" class="desktop-site-option">
-                    <svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg>
-                    <span>Desktop site</span>
-                    <label class="desktop-site-toggle">
-                        <input type="checkbox">
-                        <span class="toggle-slider"></span>
-                    </label>
-                </li>
+                <li id="desktop-site-button" class="desktop-site-option"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg><span>Desktop site</span><label class="desktop-site-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></li>
                 <li id="edit-shortcuts-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit Shortcuts</li>
                 <div class="dropdown-menu-divider"></div>
                 <li>
@@ -357,7 +326,6 @@
             // --- CONSTANTS & CONFIGURATION ---
             const SHORTCUTS_STORAGE_KEY = 'browserHomePageShortcuts';
             const THEME_STORAGE_KEY = 'browserThemePreference';
-            // User-provided SerpApi Key
             const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284'; 
             const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
             
@@ -365,8 +333,8 @@
             let currentQuery = '';
             let currentPage = 1;
             let currentSearchType = 'all';
-            let backPressOnHome = false;
             let suggestionDebounceTimer;
+            let canExitApp = false; // For WebView back button exit logic
 
             // --- DOM ELEMENT SELECTIONS ---
             const body = document.body;
@@ -377,12 +345,10 @@
             const searchBar = document.getElementById('search-bar');
             const headerSearchRow = document.getElementById('header-search-row');
             const suggestionsBox = document.getElementById('suggestions-box');
-            // Page containers
             const homeScreen = document.getElementById('home-screen');
             const searchResultsPage = document.getElementById('search-results-page');
             const editShortcutsPage = document.getElementById('edit-shortcuts-page');
             const fullPageLoader = document.getElementById('full-page-loader');
-            // Modal and Shortcut elements
             const addShortcutButton = document.getElementById('add-shortcut-button');
             const modalOverlay = document.getElementById('add-site-modal');
             const cancelModalButton = document.getElementById('cancel-modal-button');
@@ -390,30 +356,45 @@
             const shortcutsContainer = document.getElementById('shortcuts-container');
             const siteNameInput = document.getElementById('site-name-input');
             const siteUrlInput = document.getElementById('site-url-input');
-            // Edit Shortcuts elements
             const editShortcutsButton = document.getElementById('edit-shortcuts-button');
             const editShortcutsDoneBtn = document.getElementById('edit-shortcuts-done-btn');
             const editShortcutsList = document.getElementById('edit-shortcuts-list');
             const toastMessage = document.getElementById('toast-message');
 
-            // --- THEME MANAGEMENT ---
+            // --- THEME MANAGEMENT (UPDATED FOR WEBVIEW) ---
             const applyTheme = (theme) => {
-                if (theme === 'dark') { body.classList.add('dark-theme'); themeToggle.checked = true; } 
-                else { body.classList.remove('dark-theme'); themeToggle.checked = false; }
-            };
-            const toggleTheme = () => {
-                const newTheme = themeToggle.checked ? 'dark' : 'light';
-                localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-                applyTheme(newTheme);
-            };
-            const initializeTheme = () => {
-                const savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-                if (savedTheme) applyTheme(savedTheme);
-                else {
-                    const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
-                    applyTheme(prefersDark ? 'dark' : 'light');
+                if (theme === 'dark') {
+                    body.classList.add('dark-theme');
+                    themeToggle.checked = true;
+                } else {
+                    body.classList.remove('dark-theme');
+                    themeToggle.checked = false;
                 }
             };
+
+            const toggleTheme = () => {
+                const newTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
+                try {
+                    // This is the line that fails in a default WebView
+                    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
+                } catch (e) {
+                    console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
+                }
+                applyTheme(newTheme);
+            };
+
+            const initializeTheme = () => {
+                let savedTheme = null;
+                try {
+                    // This is the line that fails in a default WebView
+                    savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
+                } catch (e) {
+                     console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
+                }
+                const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+                applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
+            };
+
             themeToggle.addEventListener('change', toggleTheme);
             
             // --- UI/PAGE NAVIGATION LOGIC ---
@@ -421,78 +402,75 @@
                 [homeScreen, searchResultsPage, editShortcutsPage].forEach(page => {
                     page.classList.toggle('hidden', page !== pageToShow);
                 });
-                
-                // FEATURE: Control visibility of the search bar in the universal header
-                // Show search bar only on the home screen.
-                headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen);
-                
+                headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen && pageToShow !== searchResultsPage);
                 document.documentElement.scrollTop = 0;
-                backPressOnHome = false; // Reset exit confirmation on any navigation
+                canExitApp = false; // Reset exit confirmation on any navigation
             };
-
             const showLoader = () => fullPageLoader.classList.remove('hidden');
             const hideLoader = () => fullPageLoader.classList.add('hidden');
-
             const showToast = (message) => {
                 toastMessage.textContent = message;
                 toastMessage.classList.add('show');
                 setTimeout(() => { toastMessage.classList.remove('show'); }, 2000);
             };
 
-            // --- ROBUST HISTORY & BACK BUTTON MANAGEMENT ---
-            window.addEventListener('popstate', (event) => {
-                const state = event.state;
-                if (!state || state.pageType === 'home') {
-                    showPage(homeScreen);
-                    if (backPressOnHome) window.close();
-                    else {
-                        backPressOnHome = true;
+            // --- WEBVIEW-COMPATIBLE BACK BUTTON & HISTORY MANAGEMENT ---
+            const handleBackButtonPress = () => {
+                if (dropdownMenu.classList.contains('show')) { dropdownMenu.classList.remove('show'); return; }
+                if (modalOverlay.classList.contains('show')) { hideModal(); return; }
+                if (suggestionsBox.style.display === 'block') { hideSuggestions(); return; }
+
+                if (!homeScreen.classList.contains('hidden')) {
+                    if (canExitApp) {
+                        try { window.Android.exitApp(); } 
+                        catch (err) { console.warn("Android.exitApp() not available."); window.close(); }
+                    } else {
+                        canExitApp = true;
                         showToast("Press back again to exit");
-                        setTimeout(() => { backPressOnHome = false; }, 2500);
-                        history.pushState({ pageType: 'home' }, 'Home', '#home');
+                        setTimeout(() => { canExitApp = false; }, 2000);
                     }
-                } else if (state.pageType === 'results') {
-                    showLoader();
+                } else {
+                    history.back();
+                }
+            };
+            window.handleBackButtonPress = handleBackButtonPress;
+
+            window.addEventListener('popstate', (event) => {
+                canExitApp = false;
+                const state = event.state;
+                if (state && state.pageType === 'results') {
                     performSearch(state.query, state.type, state.pageNum, true);
-                } else if (state.pageType === 'edit') {
+                } else if (state && state.pageType === 'edit') {
                     showPage(editShortcutsPage);
                     renderEditShortcutsList();
+                } else {
+                    showPage(homeScreen);
                 }
             });
-
-            // Set initial state on load
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
-
             homeButton.addEventListener('click', () => {
-                showPage(homeScreen);
-                history.pushState({ pageType: 'home' }, 'Home', '#home');
+                if (homeScreen.classList.contains('hidden')) {
+                    history.pushState({ pageType: 'home' }, 'Home', '#home');
+                    showPage(homeScreen);
+                }
             });
 
-            // --- FEATURE: AUTO-SUGGEST SEARCH BAR ---
-            async function getSuggestions(query) {
-                if (!query) {
-                    hideSuggestions();
-                    return;
-                }
-                // Using Google's suggestion API. It's generally open and doesn't require a proxy.
+            // --- AUTO-SUGGEST SEARCH BAR ---
+            const getSuggestions = async (query) => {
+                if (!query) { hideSuggestions(); return; }
                 const url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`;
                 try {
                     const response = await fetch(url);
+                    if (!response.ok) return;
                     const data = await response.json();
-                    renderSuggestions(data[1]); // The second item in the array is the list of suggestions
-                } catch (error) {
-                    console.error("Failed to fetch suggestions:", error);
-                    hideSuggestions();
-                }
-            }
+                    renderSuggestions(data[1]);
+                } catch (error) { console.error("Failed to fetch suggestions:", error); hideSuggestions(); }
+            };
 
-            function renderSuggestions(suggestions) {
-                if (!suggestions || suggestions.length === 0) {
-                    hideSuggestions();
-                    return;
-                }
+            const renderSuggestions = (suggestions) => {
+                if (!suggestions || suggestions.length === 0) { hideSuggestions(); return; }
                 const ul = document.createElement('ul');
-                suggestions.forEach(suggestion => {
+                suggestions.slice(0, 8).forEach(suggestion => { // Limit to 8 suggestions
                     const li = document.createElement('li');
                     li.textContent = suggestion;
                     li.addEventListener('click', () => {
@@ -506,22 +484,15 @@
                 suggestionsBox.innerHTML = '';
                 suggestionsBox.appendChild(ul);
                 suggestionsBox.style.display = 'block';
-            }
+            };
 
             const hideSuggestions = () => { suggestionsBox.style.display = 'none'; };
-
             searchBar.addEventListener('input', () => {
                 clearTimeout(suggestionDebounceTimer);
-                suggestionDebounceTimer = setTimeout(() => {
-                    getSuggestions(searchBar.value.trim());
-                }, 200); // Debounce to prevent API calls on every keystroke
+                suggestionDebounceTimer = setTimeout(() => getSuggestions(searchBar.value.trim()), 250);
             });
-            // Hide suggestions if user clicks elsewhere
-            document.addEventListener('click', (e) => {
-                if (!headerSearchRow.contains(e.target)) {
-                    hideSuggestions();
-                }
-            });
+            document.addEventListener('click', (e) => { if (!headerSearchRow.contains(e.target)) hideSuggestions(); });
+            searchBar.addEventListener('focus', () => getSuggestions(searchBar.value.trim()));
 
             // --- CORE SEARCH FUNCTIONALITY ---
             async function performSearch(query, type = 'all', pageNum = 1, isHistoryNavigation = false) {
@@ -530,39 +501,46 @@
                 currentPage = pageNum;
 
                 if (!isHistoryNavigation) {
-                    history.pushState({ pageType: 'results', query, type, pageNum }, `Search for ${query}`);
+                    history.pushState({ pageType: 'results', query, type, pageNum }, `Search: ${query}`);
                 }
                 
                 showPage(searchResultsPage);
-                renderResultsPageStructure(query);
+                renderResultsPageStructure(query); // Renders skeleton with loader
 
                 const apiUrl = buildApiUrl(query, type, pageNum);
                 const requestUrl = `${CORS_PROXY_URL}${encodeURIComponent(apiUrl)}`;
                 
                 try {
                     const response = await fetch(requestUrl);
-                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    if (!response.ok) throw new Error(`Network response was not ok (status: ${response.status})`);
                     
                     const data = await response.json();
                     if (data.error) throw new Error(data.error);
                     renderContent(data);
                 } catch (error) {
-                    console.error("Failed to fetch search results:", error);
+                    console.error("Search API Error:", error);
                     const contentArea = document.getElementById('results-content-area');
-                    if (contentArea) contentArea.innerHTML = `<p style="text-align:center; padding: 20px;">Failed to load results. ${error.message}</p>`;
+                    if (contentArea) {
+                        contentArea.innerHTML = `
+                        <div style="text-align: center; padding: 40px 20px; color: var(--secondary-text-color);">
+                            <h3 style="color: var(--text-color); margin-bottom: 10px;">Something went wrong</h3>
+                            <p>Could not load results. Please check your internet connection and try again.</p>
+                            <p style="font-size: 12px; margin-top: 20px;">Details: ${escapeHTML(error.message)}</p>
+                        </div>`;
+                    }
                 } finally {
                     hideLoader();
                 }
             }
 
-            function buildApiUrl(query, type, pageNum) {
+            const buildApiUrl = (query, type, pageNum) => {
                 const encodedQuery = encodeURIComponent(query);
                 const start = (pageNum - 1) * 10;
                 let url = `https://serpapi.com/search.json?q=${encodedQuery}&api_key=${SERP_API_KEY}&start=${start}`;
                 if (type === 'images') url += '&tbm=isch';
                 if (type === 'videos') url += '&tbm=vid';
                 return url;
-            }
+            };
             
             searchBar.addEventListener('keydown', (event) => {
                 if (event.key === 'Enter') {
@@ -588,9 +566,7 @@
                             <div class="filter-tab ${currentSearchType === 'videos' ? 'active' : ''}" data-type="videos">Videos</div>
                         </div>
                     </div>
-                    <div class="results-content-area" id="results-content-area">
-                        <div class="loader"></div>
-                    </div>
+                    <div class="results-content-area" id="results-content-area"></div>
                 `;
                 document.getElementById('results-search-bar').addEventListener('keydown', handleResultsSearch);
                 document.querySelectorAll('.filter-tab').forEach(tab => tab.addEventListener('click', handleTabClick));
@@ -599,7 +575,7 @@
             function renderContent(data) {
                 const container = document.getElementById('results-content-area');
                 if (!container) return;
-                container.className = 'results-content-area'; // Reset class name
+                container.className = 'results-content-area';
                 switch(currentSearchType) {
                     case 'images': renderImageResults(data.images_results, container); break;
                     case 'videos': renderVideoResults(data.video_results, container); break;
@@ -609,61 +585,28 @@
             }
 
             function renderOrganicResults(results, container) {
-                if (!results || results.length === 0) { container.innerHTML = '<p>No web results found.</p>'; return; }
+                if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No web results found.</p>'; return; }
                 const html = results.map(item => {
                     let domain = '';
                     try { domain = new URL(item.link).hostname; } catch (e) { domain = item.displayed_link.split(' ')[0]; }
-                    return `
-                    <div class="organic-result-item">
-                        <a href="${item.link}" target="_blank">
-                            <div class="organic-result-header">
-                                <img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'">
-                                <span class="organic-result-link">${item.displayed_link}</span>
-                            </div>
-                            <h3 class="organic-result-title">${item.title}</h3>
-                        </a>
-                        <p class="organic-result-snippet">${item.snippet || ''}</p>
-                    </div>`;
+                    return `<div class="organic-result-item"><a href="${item.link}" target="_blank"><div class="organic-result-header"><img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'"><span class="organic-result-link">${item.displayed_link}</span></div><h3 class="organic-result-title">${item.title}</h3></a><p class="organic-result-snippet">${item.snippet || ''}</p></div>`;
                 }).join('');
                 container.innerHTML = html;
             }
 
             function renderImageResults(results, container) {
-                if (!results || results.length === 0) { container.innerHTML = '<p>No image results found.</p>'; return; }
+                if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No image results found.</p>'; return; }
                 container.classList.add('image-results-grid');
                 const html = results.map(item => {
-                    let domain = '';
-                    try { domain = new URL(item.link).hostname; } catch (e) {}
-                    return `
-                    <div class="image-result-item">
-                        <a href="${item.original}" target="_blank" class="image-container">
-                            <img src="${item.thumbnail}" alt="${escapeHTML(item.title)}" class="main-image" loading="lazy">
-                        </a>
-                        <div class="image-title">${escapeHTML(item.title)}</div>
-                        <a href="${item.link}" target="_blank" class="image-source-info">
-                            <img src="https://www.google.com/s2/favicons?sz=16&domain=${domain}" class="favicon" alt="" loading="lazy" onerror="this.style.display='none'">
-                            <span class="image-source-name">${item.source}</span>
-                        </a>
-                    </div>`;
+                    let domain = ''; try { domain = new URL(item.link).hostname; } catch (e) {}
+                    return `<div class="image-result-item"><a href="${item.original}" target="_blank" class="image-container"><img src="${item.thumbnail}" alt="${escapeHTML(item.title)}" class="main-image" loading="lazy"></a><div class="image-title">${escapeHTML(item.title)}</div><a href="${item.link}" target="_blank" class="image-source-info"><img src="https://www.google.com/s2/favicons?sz=16&domain=${domain}" class="favicon" alt="" loading="lazy" onerror="this.style.display='none'"><span class="image-source-name">${item.source}</span></a></div>`;
                 }).join('');
                 container.innerHTML = html;
             }
             
             function renderVideoResults(results, container) {
-                if (!results || results.length === 0) { container.innerHTML = '<p>No video results found.</p>'; return; }
-                const html = results.map(item => `
-                    <div class="video-result-item">
-                       <a href="${item.link}" target="_blank">
-                           <div class="video-thumbnail-container">
-                               <img src="${item.thumbnail}" class="video-thumbnail" loading="lazy">
-                               ${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}
-                           </div>
-                           <div class="video-info">
-                               <div class="video-title">${item.title}</div>
-                               <div class="video-source">${item.source} &middot; ${item.published_date || ''}</div>
-                           </div>
-                       </a>
-                    </div>`).join('');
+                if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No video results found.</p>'; return; }
+                const html = results.map(item => `<div class="video-result-item"><a href="${item.link}" target="_blank"><div class="video-thumbnail-container"><img src="${item.thumbnail}" class="video-thumbnail" loading="lazy">${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}</div><div class="video-info"><div class="video-title">${item.title}</div><div class="video-source">${item.source} &middot; ${item.published_date || ''}</div></div></a></div>`).join('');
                 container.innerHTML = html;
             }
 
@@ -672,12 +615,7 @@
                 if (!paginationData) return;
                 const hasPrev = currentPage > 1;
                 const hasNext = paginationData.next;
-                const paginationHTML = `
-                    <div class="pagination-controls">
-                        <button id="prev-page-btn" class="pagination-button" ${!hasPrev ? 'disabled' : ''}>Previous</button>
-                        <span>Page ${currentPage}</span>
-                        <button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button>
-                    </div>`;
+                const paginationHTML = `<div class="pagination-controls"><button id="prev-page-btn" class="pagination-button" ${!hasPrev ? 'disabled' : ''}>Previous</button><span>Page ${currentPage}</span><button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button></div>`;
                 container.insertAdjacentHTML('beforeend', paginationHTML);
                 if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage - 1); });
                 if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage + 1); });
@@ -687,41 +625,27 @@
             function handleResultsSearch(event) {
                 if (event.key === 'Enter') {
                     const query = event.target.value.trim();
-                    if (query && query !== currentQuery) {
-                        showLoader();
-                        performSearch(query, 'all', 1);
-                    }
+                    if (query && query !== currentQuery) { showLoader(); performSearch(query, 'all', 1); }
                 }
             }
-
             function handleTabClick(event) {
                 const type = event.currentTarget.dataset.type;
-                if (type !== currentSearchType) {
-                    performSearch(currentQuery, type, 1);
-                }
+                if (type !== currentSearchType) { showLoader(); performSearch(currentQuery, type, 1); }
             }
 
-            // --- UTILITY FUNCTIONS ---
+            // --- UTILITY & SHORTCUTS LOGIC ---
             function escapeHTML(str) { return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]); }
-            
-            // --- MENU, MODAL, SHORTCUTS LOGIC ---
             const toggleMenu = () => dropdownMenu.classList.toggle('show');
             menuButton.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
             window.addEventListener('click', e => { if (dropdownMenu.classList.contains('show') && !dropdownMenu.contains(e.target) && e.target !== menuButton) { toggleMenu(); }});
-            const showModal = () => modalOverlay.classList.add('show');
             const hideModal = () => { modalOverlay.classList.remove('show'); addSiteForm.reset(); };
-            addShortcutButton.addEventListener('click', showModal);
-            cancelModalButton.addEventListener('click', hideModal);
-            modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
             const getShortcuts = () => JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY)) || [];
             const saveShortcuts = shortcuts => localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
             
             const renderShortcuts = () => {
-                const existingShortcuts = shortcutsContainer.querySelectorAll('.shortcut-item:not(#add-shortcut-button)');
-                existingShortcuts.forEach(sc => sc.remove());
+                shortcutsContainer.querySelectorAll('.shortcut-item:not(#add-shortcut-button)').forEach(sc => sc.remove());
                 getShortcuts().forEach(shortcut => {
-                    const shortcutElement = createShortcutElement(shortcut.name, shortcut.url);
-                    shortcutsContainer.insertBefore(shortcutElement, addShortcutButton);
+                    shortcutsContainer.insertBefore(createShortcutElement(shortcut.name, shortcut.url), addShortcutButton);
                 });
             };
             const createShortcutElement = (name, url) => {
@@ -729,35 +653,30 @@
                 shortcutLink.href = url;
                 shortcutLink.className = 'shortcut-item';
                 shortcutLink.title = name;
-                const iconDiv = document.createElement('div');
-                iconDiv.className = 'shortcut-icon';
-                const nameP = document.createElement('p');
-                nameP.className = 'shortcut-name';
-                nameP.textContent = name;
+                const iconDiv = document.createElement('div'); iconDiv.className = 'shortcut-icon';
+                const nameP = document.createElement('p'); nameP.className = 'shortcut-name'; nameP.textContent = name;
                 try {
                     const hostname = new URL(url).hostname;
                     const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
-                    const img = new Image();
-                    img.src = faviconUrl;
+                    const img = new Image(); img.src = faviconUrl;
                     img.onload = () => { iconDiv.innerHTML = ''; iconDiv.appendChild(img); };
                     img.onerror = () => { iconDiv.textContent = name.charAt(0).toUpperCase(); };
                 } catch (error) { iconDiv.textContent = name.charAt(0).toUpperCase(); }
-                shortcutLink.appendChild(iconDiv);
-                shortcutLink.appendChild(nameP);
+                shortcutLink.appendChild(iconDiv); shortcutLink.appendChild(nameP);
                 return shortcutLink;
             };
+            addShortcutButton.addEventListener('click', () => modalOverlay.classList.add('show'));
+            cancelModalButton.addEventListener('click', hideModal);
+            modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
             addSiteForm.addEventListener('submit', e => {
                 e.preventDefault();
-                const name = siteNameInput.value.trim();
                 let url = siteUrlInput.value.trim();
-                if (name && url) {
-                    if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                    const shortcuts = getShortcuts();
-                    shortcuts.push({ name, url });
-                    saveShortcuts(shortcuts);
-                    renderShortcuts();
-                    hideModal();
-                }
+                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                const shortcuts = getShortcuts();
+                shortcuts.push({ name: siteNameInput.value.trim(), url });
+                saveShortcuts(shortcuts);
+                renderShortcuts();
+                hideModal();
             });
 
             // --- EDIT SHORTCUTS FUNCTIONALITY ---
@@ -765,34 +684,22 @@
                 editShortcutsList.innerHTML = '';
                 const shortcuts = getShortcuts();
                 if (shortcuts.length === 0) {
-                    editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--secondary-text-color);">No shortcuts added yet.</p>';
-                    return;
+                    editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--secondary-text-color);">No shortcuts added yet.</p>'; return;
                 }
                 shortcuts.forEach((shortcut, index) => {
                     const item = document.createElement('div');
                     item.className = 'edit-shortcut-item';
-                    const icon = createShortcutElement(shortcut.name, shortcut.url).querySelector('.shortcut-icon');
-                    item.innerHTML = `
-                        <div class="edit-shortcut-info">
-                            <div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div>
-                            <div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div>
-                        </div>
-                        <button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button>
-                    `;
-                    item.prepend(icon);
+                    item.innerHTML = `${createShortcutElement(shortcut.name, shortcut.url).querySelector('.shortcut-icon').outerHTML}<div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button>`;
                     editShortcutsList.appendChild(item);
                 });
             };
-
             editShortcutsButton.addEventListener('click', () => {
                 history.pushState({ pageType: 'edit' }, 'Edit Shortcuts');
                 showPage(editShortcutsPage);
                 renderEditShortcutsList();
                 dropdownMenu.classList.remove('show');
             });
-
-            editShortcutsDoneBtn.addEventListener('click', () => { history.back(); });
-
+            editShortcutsDoneBtn.addEventListener('click', () => history.back());
             editShortcutsList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-shortcut-btn')) {
                     const index = parseInt(e.target.dataset.index, 10);
