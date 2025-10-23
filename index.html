@@ -334,7 +334,6 @@
             let currentPage = 1;
             let currentSearchType = 'all';
             let suggestionDebounceTimer;
-            let canExitApp = false; // For WebView back button exit logic
 
             // --- DOM ELEMENT SELECTIONS ---
             const body = document.body;
@@ -375,7 +374,6 @@
             const toggleTheme = () => {
                 const newTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
                 try {
-                    // This is the line that fails in a default WebView
                     localStorage.setItem(THEME_STORAGE_KEY, newTheme);
                 } catch (e) {
                     console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
@@ -386,7 +384,6 @@
             const initializeTheme = () => {
                 let savedTheme = null;
                 try {
-                    // This is the line that fails in a default WebView
                     savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
                 } catch (e) {
                      console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
@@ -404,7 +401,6 @@
                 });
                 headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen && pageToShow !== searchResultsPage);
                 document.documentElement.scrollTop = 0;
-                canExitApp = false; // Reset exit confirmation on any navigation
             };
             const showLoader = () => fullPageLoader.classList.remove('hidden');
             const hideLoader = () => fullPageLoader.classList.add('hidden');
@@ -414,29 +410,45 @@
                 setTimeout(() => { toastMessage.classList.remove('show'); }, 2000);
             };
 
-            // --- WEBVIEW-COMPATIBLE BACK BUTTON & HISTORY MANAGEMENT ---
+            // --- CRITICAL: New Back Button System for Sketchware WebView ---
+            // This function creates a bridge between the WebView and native Android back button presses.
+            // It MUST return a boolean to tell the native code whether the event was handled.
             const handleBackButtonPress = () => {
-                if (dropdownMenu.classList.contains('show')) { dropdownMenu.classList.remove('show'); return; }
-                if (modalOverlay.classList.contains('show')) { hideModal(); return; }
-                if (suggestionsBox.style.display === 'block') { hideSuggestions(); return; }
+                // First, handle transient UI elements that should be closed before navigating.
+                if (dropdownMenu.classList.contains('show')) {
+                    dropdownMenu.classList.remove('show');
+                    return true; // The back press was handled (closed the menu).
+                }
+                if (modalOverlay.classList.contains('show')) {
+                    hideModal();
+                    return true; // The back press was handled (closed the modal).
+                }
+                if (suggestionsBox.style.display === 'block') {
+                    hideSuggestions();
+                    return true; // The back press was handled (closed suggestions).
+                }
 
-                if (!homeScreen.classList.contains('hidden')) {
-                    if (canExitApp) {
-                        try { window.Android.exitApp(); } 
-                        catch (err) { console.warn("Android.exitApp() not available."); window.close(); }
-                    } else {
-                        canExitApp = true;
-                        showToast("Press back again to exit");
-                        setTimeout(() => { canExitApp = false; }, 2000);
-                    }
+                // Now, check the current page state for history navigation.
+                const isHomePage = !homeScreen.classList.contains('hidden');
+
+                if (isHomePage) {
+                    // We are on the home page. There's no more history to go back to within the web app.
+                    // Signal to Sketchware that it should handle the back press (e.g., exit the app).
+                    return false;
                 } else {
+                    // We are on a different page (e.g., search results, edit shortcuts).
+                    // Go back in the browser's history.
                     history.back();
+                    // Signal to Sketchware that we have handled the back press.
+                    return true;
                 }
             };
+            
+            // Make the function globally accessible so the Sketchware WebView can call it.
+            // Example Sketchware call: webview.evaluateJavascript("handleBackButtonPress()", ...);
             window.handleBackButtonPress = handleBackButtonPress;
 
             window.addEventListener('popstate', (event) => {
-                canExitApp = false;
                 const state = event.state;
                 if (state && state.pageType === 'results') {
                     performSearch(state.query, state.type, state.pageNum, true);
@@ -444,12 +456,16 @@
                     showPage(editShortcutsPage);
                     renderEditShortcutsList();
                 } else {
+                    // Default to home screen if history state is null or unknown
                     showPage(homeScreen);
                 }
             });
+            // Set the initial state for the home page
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
+
             homeButton.addEventListener('click', () => {
                 if (homeScreen.classList.contains('hidden')) {
+                    // Only push a new state if we are navigating TO home
                     history.pushState({ pageType: 'home' }, 'Home', '#home');
                     showPage(homeScreen);
                 }
@@ -500,6 +516,7 @@
                 currentSearchType = type;
                 currentPage = pageNum;
 
+                // When we perform a NEW search, we push a new state into the history
                 if (!isHistoryNavigation) {
                     history.pushState({ pageType: 'results', query, type, pageNum }, `Search: ${query}`);
                 }
