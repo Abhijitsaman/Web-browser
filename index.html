@@ -230,6 +230,44 @@
         .edit-shortcut-name { font-size: 16px; color: var(--text-color); }
         .edit-shortcut-url { font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
         .delete-shortcut-btn { cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: white; background-color: var(--delete-icon-bg); border: none; flex-shrink: 0; }
+
+        /* --- SOLUTION: Custom Context Menu for Links --- */
+        #context-menu-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 100vh;
+            background: transparent; /* Invisible, just for capturing clicks to close */
+            z-index: 1500;
+        }
+        #custom-context-menu {
+            position: fixed;
+            background-color: var(--dropdown-bg);
+            border-radius: 12px;
+            box-shadow: 0 5px 15px var(--shadow-color);
+            width: 280px;
+            z-index: 1501;
+            overflow: hidden;
+            animation: fadeIn 0.1s ease-out;
+        }
+        #custom-context-menu ul { list-style: none; padding: 8px 0; }
+        #custom-context-menu li { padding: 12px 20px; font-size: 16px; cursor: pointer; color: var(--dropdown-text-color); }
+        #custom-context-menu li:hover { background-color: var(--dropdown-hover-bg); }
+        #context-menu-header {
+            background-color: var(--search-bar-bg);
+            padding: 12px 16px;
+            border-bottom: 1px solid var(--border-color);
+        }
+        #context-menu-header span {
+            display: block;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            line-height: 1.4;
+        }
+        #context-menu-title { font-size: 15px; color: var(--text-color); }
+        #context-menu-url { font-size: 13px; color: var(--secondary-text-color); }
     </style>
 </head>
 <body>
@@ -252,7 +290,6 @@
             </div>
             <div class="header-search-row" id="header-search-row">
                 <input type="search" id="search-bar" class="search-bar" placeholder="Search or type web address" autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">
-                <!-- FEATURE: Auto-Suggest Search Box container -->
                 <div id="suggestions-box" class="suggestions-box"></div>
             </div>
         </header>
@@ -321,6 +358,23 @@
     
     <div class="toast-message" id="toast-message"></div>
 
+    <!-- SOLUTION: Custom Context Menu HTML -->
+    <div id="context-menu-overlay" class="hidden"></div>
+    <div id="custom-context-menu" class="hidden">
+        <div id="context-menu-header">
+            <span id="context-menu-title"></span>
+            <span id="context-menu-url"></span>
+        </div>
+        <ul>
+            <li data-action="open-new-tab">Open in new tab</li>
+            <li data-action="copy-address">Copy link address</li>
+            <li data-action="copy-text">Copy link text</li>
+            <li data-action="share">Share link</li>
+            <li data-action="download">Download link</li>
+        </ul>
+    </div>
+
+
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONSTANTS & CONFIGURATION ---
@@ -334,6 +388,8 @@
             let currentPage = 1;
             let currentSearchType = 'all';
             let suggestionDebounceTimer;
+            let longPressTimer;
+            let isLongPress = false;
 
             // --- DOM ELEMENT SELECTIONS ---
             const body = document.body;
@@ -359,8 +415,14 @@
             const editShortcutsDoneBtn = document.getElementById('edit-shortcuts-done-btn');
             const editShortcutsList = document.getElementById('edit-shortcuts-list');
             const toastMessage = document.getElementById('toast-message');
-
-            // --- THEME MANAGEMENT (UPDATED FOR WEBVIEW) ---
+            // CONTEXT MENU ELEMENTS
+            const contextMenu = document.getElementById('custom-context-menu');
+            const contextMenuOverlay = document.getElementById('context-menu-overlay');
+            const contextMenuHeaderTitle = document.getElementById('context-menu-title');
+            const contextMenuHeaderUrl = document.getElementById('context-menu-url');
+            let activeLinkElement = null;
+            
+            // --- THEME MANAGEMENT ---
             const applyTheme = (theme) => {
                 if (theme === 'dark') {
                     body.classList.add('dark-theme');
@@ -370,35 +432,22 @@
                     themeToggle.checked = false;
                 }
             };
-
             const toggleTheme = () => {
                 const newTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
-                try {
-                    localStorage.setItem(THEME_STORAGE_KEY, newTheme);
-                } catch (e) {
-                    console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
-                }
+                try { localStorage.setItem(THEME_STORAGE_KEY, newTheme); } catch (e) { console.error("LocalStorage is not available.", e); }
                 applyTheme(newTheme);
             };
-
             const initializeTheme = () => {
                 let savedTheme = null;
-                try {
-                    savedTheme = localStorage.getItem(THEME_STORAGE_KEY);
-                } catch (e) {
-                     console.error("LocalStorage is not available. Please enable DOM Storage in the WebView settings.", e);
-                }
+                try { savedTheme = localStorage.getItem(THEME_STORAGE_KEY); } catch (e) { console.error("LocalStorage is not available.", e); }
                 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
                 applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
             };
-
             themeToggle.addEventListener('change', toggleTheme);
             
             // --- UI/PAGE NAVIGATION LOGIC ---
             const showPage = (pageToShow) => {
-                [homeScreen, searchResultsPage, editShortcutsPage].forEach(page => {
-                    page.classList.toggle('hidden', page !== pageToShow);
-                });
+                [homeScreen, searchResultsPage, editShortcutsPage].forEach(page => page.classList.toggle('hidden', page !== pageToShow));
                 headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen && pageToShow !== searchResultsPage);
                 document.documentElement.scrollTop = 0;
             };
@@ -407,248 +456,146 @@
             const showToast = (message) => {
                 toastMessage.textContent = message;
                 toastMessage.classList.add('show');
-                setTimeout(() => { toastMessage.classList.remove('show'); }, 2000);
+                setTimeout(() => { toastMessage.classList.remove('show'); }, 2500);
             };
 
-            // --- CRITICAL: New Back Button System for Sketchware WebView ---
-            // This function creates a bridge between the WebView and native Android back button presses.
-            // It MUST return a boolean to tell the native code whether the event was handled.
-            const handleBackButtonPress = () => {
-                // First, handle transient UI elements that should be closed before navigating.
-                if (dropdownMenu.classList.contains('show')) {
-                    dropdownMenu.classList.remove('show');
-                    return true; // The back press was handled (closed the menu).
-                }
-                if (modalOverlay.classList.contains('show')) {
-                    hideModal();
-                    return true; // The back press was handled (closed the modal).
-                }
-                if (suggestionsBox.style.display === 'block') {
-                    hideSuggestions();
-                    return true; // The back press was handled (closed suggestions).
-                }
-
-                // Now, check the current page state for history navigation.
-                const isHomePage = !homeScreen.classList.contains('hidden');
-
-                if (isHomePage) {
-                    // We are on the home page. There's no more history to go back to within the web app.
-                    // Signal to Sketchware that it should handle the back press (e.g., exit the app).
-                    return false;
-                } else {
-                    // We are on a different page (e.g., search results, edit shortcuts).
-                    // Go back in the browser's history.
-                    history.back();
-                    // Signal to Sketchware that we have handled the back press.
-                    return true;
-                }
+            // --- Back Button System ---
+            window.handleBackButtonPress = () => {
+                if (dropdownMenu.classList.contains('show')) { dropdownMenu.classList.remove('show'); return true; }
+                if (modalOverlay.classList.contains('show')) { hideModal(); return true; }
+                if (suggestionsBox.style.display === 'block') { hideSuggestions(); return true; }
+                if (!homeScreen.classList.contains('hidden')) { return false; }
+                else { history.back(); return true; }
             };
-            
-            // Make the function globally accessible so the Sketchware WebView can call it.
-            // Example Sketchware call: webview.evaluateJavascript("handleBackButtonPress()", ...);
-            window.handleBackButtonPress = handleBackButtonPress;
-
             window.addEventListener('popstate', (event) => {
                 const state = event.state;
-                if (state && state.pageType === 'results') {
-                    performSearch(state.query, state.type, state.pageNum, true);
-                } else if (state && state.pageType === 'edit') {
-                    showPage(editShortcutsPage);
-                    renderEditShortcutsList();
-                } else {
-                    // Default to home screen if history state is null or unknown
-                    showPage(homeScreen);
-                }
+                if (state && state.pageType === 'results') { performSearch(state.query, state.type, state.pageNum, true); }
+                else if (state && state.pageType === 'edit') { showPage(editShortcutsPage); renderEditShortcutsList(); }
+                else { showPage(homeScreen); }
             });
-            // Set the initial state for the home page
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
-
-            homeButton.addEventListener('click', () => {
-                if (homeScreen.classList.contains('hidden')) {
-                    // Only push a new state if we are navigating TO home
-                    history.pushState({ pageType: 'home' }, 'Home', '#home');
-                    showPage(homeScreen);
-                }
-            });
+            homeButton.addEventListener('click', () => { if (homeScreen.classList.contains('hidden')) { history.pushState({ pageType: 'home' }, 'Home', '#home'); showPage(homeScreen); } });
 
             // --- AUTO-SUGGEST SEARCH BAR ---
             const getSuggestions = async (query) => {
                 if (!query) { hideSuggestions(); return; }
-                const url = `https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`;
                 try {
-                    const response = await fetch(url);
-                    if (!response.ok) return;
-                    const data = await response.json();
-                    renderSuggestions(data[1]);
+                    const response = await fetch(`https://suggestqueries.google.com/complete/search?client=firefox&q=${encodeURIComponent(query)}`);
+                    if (response.ok) renderSuggestions((await response.json())[1]);
                 } catch (error) { console.error("Failed to fetch suggestions:", error); hideSuggestions(); }
             };
-
             const renderSuggestions = (suggestions) => {
                 if (!suggestions || suggestions.length === 0) { hideSuggestions(); return; }
                 const ul = document.createElement('ul');
-                suggestions.slice(0, 8).forEach(suggestion => { // Limit to 8 suggestions
-                    const li = document.createElement('li');
-                    li.textContent = suggestion;
-                    li.addEventListener('click', () => {
-                        searchBar.value = suggestion;
-                        hideSuggestions();
-                        showLoader();
-                        performSearch(suggestion);
-                    });
+                suggestions.slice(0, 8).forEach(suggestion => {
+                    const li = document.createElement('li'); li.textContent = suggestion;
+                    li.addEventListener('click', () => { searchBar.value = suggestion; hideSuggestions(); showLoader(); performSearch(suggestion); });
                     ul.appendChild(li);
                 });
-                suggestionsBox.innerHTML = '';
-                suggestionsBox.appendChild(ul);
-                suggestionsBox.style.display = 'block';
+                suggestionsBox.innerHTML = ''; suggestionsBox.appendChild(ul); suggestionsBox.style.display = 'block';
             };
-
             const hideSuggestions = () => { suggestionsBox.style.display = 'none'; };
-            searchBar.addEventListener('input', () => {
-                clearTimeout(suggestionDebounceTimer);
-                suggestionDebounceTimer = setTimeout(() => getSuggestions(searchBar.value.trim()), 250);
-            });
+            searchBar.addEventListener('input', () => { clearTimeout(suggestionDebounceTimer); suggestionDebounceTimer = setTimeout(() => getSuggestions(searchBar.value.trim()), 250); });
             document.addEventListener('click', (e) => { if (!headerSearchRow.contains(e.target)) hideSuggestions(); });
             searchBar.addEventListener('focus', () => getSuggestions(searchBar.value.trim()));
 
             // --- CORE SEARCH FUNCTIONALITY ---
             async function performSearch(query, type = 'all', pageNum = 1, isHistoryNavigation = false) {
-                currentQuery = query;
-                currentSearchType = type;
-                currentPage = pageNum;
-
-                // When we perform a NEW search, we push a new state into the history
-                if (!isHistoryNavigation) {
-                    history.pushState({ pageType: 'results', query, type, pageNum }, `Search: ${query}`);
-                }
-                
-                showPage(searchResultsPage);
-                renderResultsPageStructure(query); // Renders skeleton with loader
-
-                const apiUrl = buildApiUrl(query, type, pageNum);
-                const requestUrl = `${CORS_PROXY_URL}${encodeURIComponent(apiUrl)}`;
-                
+                currentQuery = query; currentSearchType = type; currentPage = pageNum;
+                if (!isHistoryNavigation) { history.pushState({ pageType: 'results', query, type, pageNum }, `Search: ${query}`); }
+                showPage(searchResultsPage); renderResultsPageStructure(query);
+                const apiUrl = `${CORS_PROXY_URL}${encodeURIComponent(`https://serpapi.com/search.json?q=${encodeURIComponent(query)}&api_key=${SERP_API_KEY}&start=${(pageNum-1)*10}${type==='images'?'&tbm=isch':''}${type==='videos'?'&tbm=vid':''}`)}`;
                 try {
-                    const response = await fetch(requestUrl);
+                    const response = await fetch(apiUrl);
                     if (!response.ok) throw new Error(`Network response was not ok (status: ${response.status})`);
-                    
                     const data = await response.json();
                     if (data.error) throw new Error(data.error);
                     renderContent(data);
                 } catch (error) {
                     console.error("Search API Error:", error);
-                    const contentArea = document.getElementById('results-content-area');
-                    if (contentArea) {
-                        contentArea.innerHTML = `
-                        <div style="text-align: center; padding: 40px 20px; color: var(--secondary-text-color);">
-                            <h3 style="color: var(--text-color); margin-bottom: 10px;">Something went wrong</h3>
-                            <p>Could not load results. Please check your internet connection and try again.</p>
-                            <p style="font-size: 12px; margin-top: 20px;">Details: ${escapeHTML(error.message)}</p>
-                        </div>`;
-                    }
-                } finally {
-                    hideLoader();
-                }
+                    document.getElementById('results-content-area').innerHTML = `<div style="text-align: center; padding: 40px 20px; color: var(--secondary-text-color);"><h3 style="color: var(--text-color); margin-bottom: 10px;">Something went wrong</h3><p>Could not load results. Please check your internet connection.</p></div>`;
+                } finally { hideLoader(); }
             }
-
-            const buildApiUrl = (query, type, pageNum) => {
-                const encodedQuery = encodeURIComponent(query);
-                const start = (pageNum - 1) * 10;
-                let url = `https://serpapi.com/search.json?q=${encodedQuery}&api_key=${SERP_API_KEY}&start=${start}`;
-                if (type === 'images') url += '&tbm=isch';
-                if (type === 'videos') url += '&tbm=vid';
-                return url;
-            };
-            
-            searchBar.addEventListener('keydown', (event) => {
-                if (event.key === 'Enter') {
-                    const query = searchBar.value.trim();
-                    if (query) {
-                        hideSuggestions();
-                        showLoader();
-                        performSearch(query, 'all', 1);
-                    }
-                }
-            });
+            searchBar.addEventListener('keydown', (event) => { if (event.key === 'Enter') { const query = searchBar.value.trim(); if (query) { hideSuggestions(); showLoader(); performSearch(query, 'all', 1); } } });
 
             // --- DYNAMIC RENDERING FOR RESULTS PAGE ---
             function renderResultsPageStructure(query) {
-                searchResultsPage.innerHTML = `
-                    <div class="fixed-results-header">
-                        <input type="search" id="results-search-bar" class="search-bar" value="${escapeHTML(query)}">
-                    </div>
-                    <div class="results-header-tabs">
-                        <div class="filter-tabs-container">
-                            <div class="filter-tab ${currentSearchType === 'all' ? 'active' : ''}" data-type="all">All</div>
-                            <div class="filter-tab ${currentSearchType === 'images' ? 'active' : ''}" data-type="images">Images</div>
-                            <div class="filter-tab ${currentSearchType === 'videos' ? 'active' : ''}" data-type="videos">Videos</div>
-                        </div>
-                    </div>
-                    <div class="results-content-area" id="results-content-area"></div>
-                `;
-                document.getElementById('results-search-bar').addEventListener('keydown', handleResultsSearch);
-                document.querySelectorAll('.filter-tab').forEach(tab => tab.addEventListener('click', handleTabClick));
+                searchResultsPage.innerHTML = `<div class="fixed-results-header"><input type="search" id="results-search-bar" class="search-bar" value="${escapeHTML(query)}"></div><div class="results-header-tabs"><div class="filter-tabs-container"><div class="filter-tab ${currentSearchType==='all'?'active':''}" data-type="all">All</div><div class="filter-tab ${currentSearchType==='images'?'active':''}" data-type="images">Images</div><div class="filter-tab ${currentSearchType==='videos'?'active':''}" data-type="videos">Videos</div></div></div><div class="results-content-area" id="results-content-area"></div>`;
+                document.getElementById('results-search-bar').addEventListener('keydown', e => { if (e.key === 'Enter') { const q = e.target.value.trim(); if (q && q !== currentQuery) { showLoader(); performSearch(q, 'all', 1); } } });
+                document.querySelectorAll('.filter-tab').forEach(tab => tab.addEventListener('click', e => { const type = e.currentTarget.dataset.type; if (type !== currentSearchType) { showLoader(); performSearch(currentQuery, type, 1); } }));
             }
-
             function renderContent(data) {
-                const container = document.getElementById('results-content-area');
-                if (!container) return;
+                const container = document.getElementById('results-content-area'); if (!container) return;
                 container.className = 'results-content-area';
                 switch(currentSearchType) {
                     case 'images': renderImageResults(data.images_results, container); break;
                     case 'videos': renderVideoResults(data.video_results, container); break;
                     default: renderOrganicResults(data.organic_results, container); break;
-                }
-                renderPagination(data, container);
+                } renderPagination(data.serpapi_pagination, container);
             }
-
             function renderOrganicResults(results, container) {
                 if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No web results found.</p>'; return; }
-                const html = results.map(item => {
-                    let domain = '';
-                    try { domain = new URL(item.link).hostname; } catch (e) { domain = item.displayed_link.split(' ')[0]; }
-                    return `<div class="organic-result-item"><a href="${item.link}" target="_blank"><div class="organic-result-header"><img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'"><span class="organic-result-link">${item.displayed_link}</span></div><h3 class="organic-result-title">${item.title}</h3></a><p class="organic-result-snippet">${item.snippet || ''}</p></div>`;
-                }).join('');
-                container.innerHTML = html;
+                container.innerHTML = results.map(item => { let domain = ''; try { domain = new URL(item.link).hostname; } catch (e) {} return `<div class="organic-result-item"><a href="${item.link}" target="_blank"><div class="organic-result-header"><img class="favicon" src="https://www.google.com/s2/favicons?sz=32&domain=${domain}" alt="" loading="lazy" onerror="this.style.display='none'"><span class="organic-result-link">${item.displayed_link}</span></div><h3 class="organic-result-title">${item.title}</h3></a><p class="organic-result-snippet">${item.snippet || ''}</p></div>`; }).join('');
             }
-
             function renderImageResults(results, container) {
                 if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No image results found.</p>'; return; }
                 container.classList.add('image-results-grid');
-                const html = results.map(item => {
-                    let domain = ''; try { domain = new URL(item.link).hostname; } catch (e) {}
-                    return `<div class="image-result-item"><a href="${item.original}" target="_blank" class="image-container"><img src="${item.thumbnail}" alt="${escapeHTML(item.title)}" class="main-image" loading="lazy"></a><div class="image-title">${escapeHTML(item.title)}</div><a href="${item.link}" target="_blank" class="image-source-info"><img src="https://www.google.com/s2/favicons?sz=16&domain=${domain}" class="favicon" alt="" loading="lazy" onerror="this.style.display='none'"><span class="image-source-name">${item.source}</span></a></div>`;
-                }).join('');
-                container.innerHTML = html;
+                container.innerHTML = results.map(item => { let domain = ''; try { domain = new URL(item.link).hostname; } catch (e) {} return `<a href="${item.original}" target="_blank" class="image-result-item"><div class="image-container"><img src="${item.thumbnail}" alt="${escapeHTML(item.title)}" class="main-image" loading="lazy"></div><div class="image-title">${escapeHTML(item.title)}</div><div class="image-source-info"><img src="https://www.google.com/s2/favicons?sz=16&domain=${domain}" class="favicon" alt="" loading="lazy" onerror="this.style.display='none'"><span class="image-source-name">${item.source}</span></div></a>`; }).join('');
             }
-            
             function renderVideoResults(results, container) {
                 if (!results || results.length === 0) { container.innerHTML = '<p style="text-align:center; padding:20px;">No video results found.</p>'; return; }
-                const html = results.map(item => `<div class="video-result-item"><a href="${item.link}" target="_blank"><div class="video-thumbnail-container"><img src="${item.thumbnail}" class="video-thumbnail" loading="lazy">${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}</div><div class="video-info"><div class="video-title">${item.title}</div><div class="video-source">${item.source} &middot; ${item.published_date || ''}</div></div></a></div>`).join('');
-                container.innerHTML = html;
+                container.innerHTML = results.map(item => `<a href="${item.link}" target="_blank" class="video-result-item"><div class="video-thumbnail-container"><img src="${item.thumbnail}" class="video-thumbnail" loading="lazy">${item.duration ? `<span class="video-duration">${item.duration}</span>` : ''}</div><div class="video-info"><div class="video-title">${item.title}</div><div class="video-source">${item.source} &middot; ${item.published_date || ''}</div></div></a>`).join('');
+            }
+            function renderPagination(paginationData, container) {
+                if (!paginationData) return;
+                const paginationHTML = `<div class="pagination-controls"><button id="prev-page-btn" class="pagination-button" ${currentPage <= 1 ? 'disabled' : ''}>Previous</button><span>Page ${currentPage}</span><button id="next-page-btn" class="pagination-button" ${!paginationData.next ? 'disabled' : ''}>Next</button></div>`;
+                container.insertAdjacentHTML('beforeend', paginationHTML);
+                if (currentPage > 1) document.getElementById('prev-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage - 1); });
+                if (paginationData.next) document.getElementById('next-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage + 1); });
             }
 
-            function renderPagination(data, container) {
-                const paginationData = data.serpapi_pagination;
-                if (!paginationData) return;
-                const hasPrev = currentPage > 1;
-                const hasNext = paginationData.next;
-                const paginationHTML = `<div class="pagination-controls"><button id="prev-page-btn" class="pagination-button" ${!hasPrev ? 'disabled' : ''}>Previous</button><span>Page ${currentPage}</span><button id="next-page-btn" class="pagination-button" ${!hasNext ? 'disabled' : ''}>Next</button></div>`;
-                container.insertAdjacentHTML('beforeend', paginationHTML);
-                if (hasPrev) document.getElementById('prev-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage - 1); });
-                if (hasNext) document.getElementById('next-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage + 1); });
-            }
-            
-            // --- EVENT HANDLERS FOR DYNAMIC ELEMENTS ---
-            function handleResultsSearch(event) {
-                if (event.key === 'Enter') {
-                    const query = event.target.value.trim();
-                    if (query && query !== currentQuery) { showLoader(); performSearch(query, 'all', 1); }
+            // --- SOLUTION: CUSTOM CONTEXT MENU LOGIC ---
+            const showContextMenu = (x, y, linkElement) => {
+                activeLinkElement = linkElement;
+                const titleElem = linkElement.querySelector('.organic-result-title, .image-title, .video-title') || linkElement.closest('.organic-result-item, .image-result-item, .video-result-item')?.querySelector('.organic-result-title, .image-title, .video-title');
+                contextMenuHeaderTitle.textContent = titleElem ? titleElem.textContent.trim() : (linkElement.textContent.trim() || 'Link');
+                contextMenuHeaderUrl.textContent = linkElement.href;
+                contextMenu.classList.remove('hidden');
+                const { offsetWidth: menuWidth, offsetHeight: menuHeight } = contextMenu;
+                contextMenu.style.left = `${Math.min(x, window.innerWidth - menuWidth - 10)}px`;
+                contextMenu.style.top = `${Math.min(y, window.innerHeight - menuHeight - 10)}px`;
+                contextMenuOverlay.classList.remove('hidden');
+            };
+            const hideContextMenu = () => { contextMenu.classList.add('hidden'); contextMenuOverlay.classList.add('hidden'); activeLinkElement = null; };
+            searchResultsPage.addEventListener('touchstart', (e) => {
+                const link = e.target.closest('a[href]'); if (!link) return;
+                isLongPress = false;
+                longPressTimer = setTimeout(() => { isLongPress = true; showContextMenu(e.touches[0].clientX, e.touches[0].clientY, link); }, 500);
+            });
+            searchResultsPage.addEventListener('touchend', () => clearTimeout(longPressTimer));
+            searchResultsPage.addEventListener('touchmove', () => clearTimeout(longPressTimer));
+            searchResultsPage.addEventListener('contextmenu', e => { const link = e.target.closest('a[href]'); if (link) { e.preventDefault(); showContextMenu(e.clientX, e.clientY, link); } });
+            searchResultsPage.addEventListener('click', (e) => { if (isLongPress) { e.preventDefault(); e.stopPropagation(); } }, true);
+            contextMenuOverlay.addEventListener('click', hideContextMenu);
+            contextMenu.addEventListener('click', async (e) => {
+                const action = e.target.dataset.action; if (!action || !activeLinkElement) return;
+                const url = activeLinkElement.href;
+                const text = contextMenuHeaderTitle.textContent;
+                hideContextMenu();
+                switch (action) {
+                    case 'open-new-tab': window.open(url, '_blank'); break;
+                    case 'copy-address': try { await navigator.clipboard.writeText(url); showToast('Link address copied'); } catch (err) { showToast('Failed to copy'); } break;
+                    case 'copy-text': try { await navigator.clipboard.writeText(text); showToast('Link text copied'); } catch (err) { showToast('Failed to copy'); } break;
+                    case 'share':
+                        if (navigator.share) { try { await navigator.share({ title: text, url: url }); } catch (err) {} }
+                        else { try { await navigator.clipboard.writeText(url); showToast('Share not available. Link copied.'); } catch (err) { showToast('Share not available'); } }
+                        break;
+                    case 'download':
+                        const a = document.createElement('a'); a.href = url; a.download = '';
+                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                        break;
                 }
-            }
-            function handleTabClick(event) {
-                const type = event.currentTarget.dataset.type;
-                if (type !== currentSearchType) { showLoader(); performSearch(currentQuery, type, 1); }
-            }
+            });
 
             // --- UTILITY & SHORTCUTS LOGIC ---
             function escapeHTML(str) { return str.replace(/[&<>"']/g, match => ({'&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'})[match]); }
@@ -656,75 +603,63 @@
             menuButton.addEventListener('click', e => { e.stopPropagation(); toggleMenu(); });
             window.addEventListener('click', e => { if (dropdownMenu.classList.contains('show') && !dropdownMenu.contains(e.target) && e.target !== menuButton) { toggleMenu(); }});
             const hideModal = () => { modalOverlay.classList.remove('show'); addSiteForm.reset(); };
-            const getShortcuts = () => JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY)) || [];
-            const saveShortcuts = shortcuts => localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
             
+            // --- SOLUTION: RESILIENT LOCALSTORAGE FOR SHORTCUTS ---
+            const getShortcuts = () => {
+                try {
+                    if (!window.localStorage) { console.warn("LocalStorage is not available."); return []; }
+                    return JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY)) || [];
+                } catch (e) {
+                    console.error("Could not read from localStorage. Ensure DOM Storage is enabled in WebView.", e); return [];
+                }
+            };
+            const saveShortcuts = shortcuts => {
+                try {
+                    if (!window.localStorage) { throw new Error("LocalStorage is not available."); }
+                    localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
+                } catch (e) {
+                    console.error("Could not save to localStorage. Is storage full or disabled?", e);
+                    showToast("Error: Could not save shortcut.");
+                }
+            };
             const renderShortcuts = () => {
                 shortcutsContainer.querySelectorAll('.shortcut-item:not(#add-shortcut-button)').forEach(sc => sc.remove());
                 getShortcuts().forEach(shortcut => {
-                    shortcutsContainer.insertBefore(createShortcutElement(shortcut.name, shortcut.url), addShortcutButton);
-                });
-            };
-            const createShortcutElement = (name, url) => {
-                const shortcutLink = document.createElement('a');
-                shortcutLink.href = url;
-                shortcutLink.className = 'shortcut-item';
-                shortcutLink.title = name;
-                const iconDiv = document.createElement('div'); iconDiv.className = 'shortcut-icon';
-                const nameP = document.createElement('p'); nameP.className = 'shortcut-name'; nameP.textContent = name;
-                try {
-                    const hostname = new URL(url).hostname;
-                    const faviconUrl = `https://www.google.com/s2/favicons?sz=64&domain=${hostname}`;
-                    const img = new Image(); img.src = faviconUrl;
+                    const shortcutLink = document.createElement('a'); shortcutLink.href = shortcut.url; shortcutLink.className = 'shortcut-item'; shortcutLink.title = shortcut.name;
+                    const iconDiv = document.createElement('div'); iconDiv.className = 'shortcut-icon';
+                    const nameP = document.createElement('p'); nameP.className = 'shortcut-name'; nameP.textContent = shortcut.name;
+                    const img = new Image(); img.src = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}`;
                     img.onload = () => { iconDiv.innerHTML = ''; iconDiv.appendChild(img); };
-                    img.onerror = () => { iconDiv.textContent = name.charAt(0).toUpperCase(); };
-                } catch (error) { iconDiv.textContent = name.charAt(0).toUpperCase(); }
-                shortcutLink.appendChild(iconDiv); shortcutLink.appendChild(nameP);
-                return shortcutLink;
+                    img.onerror = () => { iconDiv.textContent = shortcut.name.charAt(0).toUpperCase(); };
+                    shortcutLink.appendChild(iconDiv); shortcutLink.appendChild(nameP);
+                    shortcutsContainer.insertBefore(shortcutLink, addShortcutButton);
+                });
             };
             addShortcutButton.addEventListener('click', () => modalOverlay.classList.add('show'));
             cancelModalButton.addEventListener('click', hideModal);
             modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
             addSiteForm.addEventListener('submit', e => {
                 e.preventDefault();
-                let url = siteUrlInput.value.trim();
-                if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                const shortcuts = getShortcuts();
-                shortcuts.push({ name: siteNameInput.value.trim(), url });
-                saveShortcuts(shortcuts);
-                renderShortcuts();
-                hideModal();
+                try { localStorage.setItem('storage_test', 'test'); localStorage.removeItem('storage_test'); }
+                catch (err) { showToast("Cannot add site. Storage is disabled."); hideModal(); return; }
+                let url = siteUrlInput.value.trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
+                const shortcuts = getShortcuts(); shortcuts.push({ name: siteNameInput.value.trim(), url });
+                saveShortcuts(shortcuts); renderShortcuts(); hideModal();
             });
 
             // --- EDIT SHORTCUTS FUNCTIONALITY ---
             const renderEditShortcutsList = () => {
                 editShortcutsList.innerHTML = '';
                 const shortcuts = getShortcuts();
-                if (shortcuts.length === 0) {
-                    editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px; color: var(--secondary-text-color);">No shortcuts added yet.</p>'; return;
-                }
-                shortcuts.forEach((shortcut, index) => {
-                    const item = document.createElement('div');
-                    item.className = 'edit-shortcut-item';
-                    item.innerHTML = `${createShortcutElement(shortcut.name, shortcut.url).querySelector('.shortcut-icon').outerHTML}<div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button>`;
-                    editShortcutsList.appendChild(item);
-                });
+                if (shortcuts.length === 0) { editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px;">No shortcuts added yet.</p>'; return; }
+                shortcuts.forEach((shortcut, index) => { editShortcutsList.innerHTML += `<div class="edit-shortcut-item"><div class="shortcut-icon" style="background-image:url('https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}')">${shortcut.name.charAt(0).toUpperCase()}</div><div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button></div>`; });
             };
-            editShortcutsButton.addEventListener('click', () => {
-                history.pushState({ pageType: 'edit' }, 'Edit Shortcuts');
-                showPage(editShortcutsPage);
-                renderEditShortcutsList();
-                dropdownMenu.classList.remove('show');
-            });
+            editShortcutsButton.addEventListener('click', () => { history.pushState({ pageType: 'edit' }, 'Edit Shortcuts'); showPage(editShortcutsPage); renderEditShortcutsList(); dropdownMenu.classList.remove('show'); });
             editShortcutsDoneBtn.addEventListener('click', () => history.back());
             editShortcutsList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-shortcut-btn')) {
-                    const index = parseInt(e.target.dataset.index, 10);
-                    let shortcuts = getShortcuts();
-                    shortcuts.splice(index, 1);
-                    saveShortcuts(shortcuts);
-                    renderShortcuts();
-                    renderEditShortcutsList();
+                    let shortcuts = getShortcuts(); shortcuts.splice(parseInt(e.target.dataset.index, 10), 1);
+                    saveShortcuts(shortcuts); renderShortcuts(); renderEditShortcutsList();
                 }
             });
 
