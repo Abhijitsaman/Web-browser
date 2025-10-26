@@ -434,11 +434,13 @@
             };
             const toggleTheme = () => {
                 const newTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
+                // UPDATED: Added try...catch for robust storage
                 try { localStorage.setItem(THEME_STORAGE_KEY, newTheme); } catch (e) { console.error("LocalStorage is not available.", e); }
                 applyTheme(newTheme);
             };
             const initializeTheme = () => {
                 let savedTheme = null;
+                // UPDATED: Added try...catch for robust storage
                 try { savedTheme = localStorage.getItem(THEME_STORAGE_KEY); } catch (e) { console.error("LocalStorage is not available.", e); }
                 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
                 applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
@@ -607,10 +609,15 @@
             // --- SOLUTION: RESILIENT LOCALSTORAGE FOR SHORTCUTS ---
             const getShortcuts = () => {
                 try {
-                    if (!window.localStorage) { console.warn("LocalStorage is not available."); return []; }
-                    return JSON.parse(localStorage.getItem(SHORTCUTS_STORAGE_KEY)) || [];
+                    if (!window.localStorage) { 
+                        console.warn("LocalStorage is not available.");
+                        return []; 
+                    }
+                    const shortcuts = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
+                    return shortcuts ? JSON.parse(shortcuts) : [];
                 } catch (e) {
-                    console.error("Could not read from localStorage. Ensure DOM Storage is enabled in WebView.", e); return [];
+                    console.error("Could not read from localStorage. Ensure DOM Storage is enabled in WebView.", e);
+                    return []; // Return an empty array so the app doesn't crash
                 }
             };
             const saveShortcuts = shortcuts => {
@@ -638,28 +645,57 @@
             addShortcutButton.addEventListener('click', () => modalOverlay.classList.add('show'));
             cancelModalButton.addEventListener('click', hideModal);
             modalOverlay.addEventListener('click', e => { if (e.target === modalOverlay) hideModal(); });
+            
             addSiteForm.addEventListener('submit', e => {
                 e.preventDefault();
-                try { localStorage.setItem('storage_test', 'test'); localStorage.removeItem('storage_test'); }
-                catch (err) { showToast("Cannot add site. Storage is disabled."); hideModal(); return; }
-                let url = siteUrlInput.value.trim(); if (!/^https?:\/\//i.test(url)) url = 'https://' + url;
-                const shortcuts = getShortcuts(); shortcuts.push({ name: siteNameInput.value.trim(), url });
-                saveShortcuts(shortcuts); renderShortcuts(); hideModal();
+                // UPDATED: Check if localStorage works before attempting to use it.
+                try {
+                    localStorage.setItem('storage_test', 'test_value');
+                    localStorage.removeItem('storage_test');
+                } catch (err) {
+                    // This block will run if storage is disabled, showing the exact error you described.
+                    showToast("Cannot add site. Storage is disabled.");
+                    hideModal();
+                    return; // Stop the function here
+                }
+
+                let url = siteUrlInput.value.trim(); 
+                if (!/^https?:\/\//i.test(url)) {
+                    url = 'https://' + url;
+                }
+                const shortcuts = getShortcuts(); 
+                shortcuts.push({ name: siteNameInput.value.trim(), url });
+                saveShortcuts(shortcuts); 
+                renderShortcuts(); 
+                hideModal();
             });
 
             // --- EDIT SHORTCUTS FUNCTIONALITY ---
             const renderEditShortcutsList = () => {
                 editShortcutsList.innerHTML = '';
                 const shortcuts = getShortcuts();
-                if (shortcuts.length === 0) { editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px;">No shortcuts added yet.</p>'; return; }
-                shortcuts.forEach((shortcut, index) => { editShortcutsList.innerHTML += `<div class="edit-shortcut-item"><div class="shortcut-icon" style="background-image:url('https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}')">${shortcut.name.charAt(0).toUpperCase()}</div><div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button></div>`; });
+                if (shortcuts.length === 0) { 
+                    editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px;">No shortcuts added yet.</p>'; 
+                    return; 
+                }
+                shortcuts.forEach((shortcut, index) => { 
+                    editShortcutsList.innerHTML += `<div class="edit-shortcut-item"><div class="shortcut-icon" style="background-image:url('https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}')">${shortcut.name.charAt(0).toUpperCase()}</div><div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button></div>`; 
+                });
             };
-            editShortcutsButton.addEventListener('click', () => { history.pushState({ pageType: 'edit' }, 'Edit Shortcuts'); showPage(editShortcutsPage); renderEditShortcutsList(); dropdownMenu.classList.remove('show'); });
+            editShortcutsButton.addEventListener('click', () => { 
+                history.pushState({ pageType: 'edit' }, 'Edit Shortcuts'); 
+                showPage(editShortcutsPage); 
+                renderEditShortcutsList(); 
+                dropdownMenu.classList.remove('show'); 
+            });
             editShortcutsDoneBtn.addEventListener('click', () => history.back());
             editShortcutsList.addEventListener('click', (e) => {
                 if (e.target.classList.contains('delete-shortcut-btn')) {
-                    let shortcuts = getShortcuts(); shortcuts.splice(parseInt(e.target.dataset.index, 10), 1);
-                    saveShortcuts(shortcuts); renderShortcuts(); renderEditShortcutsList();
+                    let shortcuts = getShortcuts(); 
+                    shortcuts.splice(parseInt(e.target.dataset.index, 10), 1);
+                    saveShortcuts(shortcuts); 
+                    renderShortcuts(); 
+                    renderEditShortcutsList();
                 }
             });
 
