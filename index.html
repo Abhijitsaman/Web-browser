@@ -434,13 +434,13 @@
             };
             const toggleTheme = () => {
                 const newTheme = body.classList.contains('dark-theme') ? 'light' : 'dark';
-                // *** MY CHANGE: Added try...catch for robust storage ***
+                // UPDATED: Added try...catch for robust storage
                 try { localStorage.setItem(THEME_STORAGE_KEY, newTheme); } catch (e) { console.error("LocalStorage is not available.", e); }
                 applyTheme(newTheme);
             };
             const initializeTheme = () => {
                 let savedTheme = null;
-                // *** MY CHANGE: Added try...catch for robust storage ***
+                // UPDATED: Added try...catch for robust storage
                 try { savedTheme = localStorage.getItem(THEME_STORAGE_KEY); } catch (e) { console.error("LocalStorage is not available.", e); }
                 const prefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
                 applyTheme(savedTheme || (prefersDark ? 'dark' : 'light'));
@@ -458,7 +458,7 @@
             const showToast = (message) => {
                 toastMessage.textContent = message;
                 toastMessage.classList.add('show');
-                setTimeout(() => { toastMessage.classList.remove('show'); }, 3000); // Increased time slightly
+                setTimeout(() => { toastMessage.classList.remove('show'); }, 2500);
             };
 
             // --- Back Button System ---
@@ -556,7 +556,7 @@
                 if (paginationData.next) document.getElementById('next-page-btn').addEventListener('click', () => { showLoader(); performSearch(currentQuery, currentSearchType, currentPage + 1); });
             }
 
-            // --- CUSTOM CONTEXT MENU LOGIC ---
+            // --- SOLUTION: CUSTOM CONTEXT MENU LOGIC ---
             const showContextMenu = (x, y, linkElement) => {
                 activeLinkElement = linkElement;
                 const titleElem = linkElement.querySelector('.organic-result-title, .image-title, .video-title') || linkElement.closest('.organic-result-item, .image-result-item, .video-result-item')?.querySelector('.organic-result-title, .image-title, .video-title');
@@ -606,10 +606,9 @@
             window.addEventListener('click', e => { if (dropdownMenu.classList.contains('show') && !dropdownMenu.contains(e.target) && e.target !== menuButton) { toggleMenu(); }});
             const hideModal = () => { modalOverlay.classList.remove('show'); addSiteForm.reset(); };
             
-            // --- *** SOLUTION: RESILIENT LOCALSTORAGE FOR SHORTCUTS *** ---
+            // --- SOLUTION: RESILIENT LOCALSTORAGE FOR SHORTCUTS ---
             const getShortcuts = () => {
                 try {
-                    // Check if localStorage is available at all
                     if (!window.localStorage) { 
                         console.warn("LocalStorage is not available.");
                         return []; 
@@ -617,18 +616,16 @@
                     const shortcuts = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
                     return shortcuts ? JSON.parse(shortcuts) : [];
                 } catch (e) {
-                    // This will catch errors if storage is disabled (e.g., in WebView)
                     console.error("Could not read from localStorage. Ensure DOM Storage is enabled in WebView.", e);
                     return []; // Return an empty array so the app doesn't crash
                 }
             };
-            const saveShortcuts = (shortcuts) => {
+            const saveShortcuts = shortcuts => {
                 try {
                     if (!window.localStorage) { throw new Error("LocalStorage is not available."); }
                     localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
                 } catch (e) {
                     console.error("Could not save to localStorage. Is storage full or disabled?", e);
-                    // Inform the user that saving failed.
                     showToast("Error: Could not save shortcut.");
                 }
             };
@@ -651,12 +648,12 @@
             
             addSiteForm.addEventListener('submit', e => {
                 e.preventDefault();
-                // *** MY CHANGE: Check if localStorage works BEFORE trying to use it. This is the main fix. ***
+                // UPDATED: Check if localStorage works before attempting to use it.
                 try {
                     localStorage.setItem('storage_test', 'test_value');
                     localStorage.removeItem('storage_test');
                 } catch (err) {
-                    // This block runs if storage is disabled, showing the exact error you saw.
+                    // This block will run if storage is disabled, showing the exact error you described.
                     showToast("Cannot add site. Storage is disabled.");
                     hideModal();
                     return; // Stop the function here
