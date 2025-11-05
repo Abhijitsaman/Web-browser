@@ -249,6 +249,15 @@
             color: var(--secondary-text-color);
         }
 
+        /* NEW: History Item Styling */
+        #history-items-container { padding: 8px 16px; }
+        .history-item { display: flex; align-items: center; padding: 12px 0; text-decoration: none; }
+        .history-item .favicon { width: 24px; height: 24px; border-radius: 4px; margin-right: 16px; flex-shrink: 0; object-fit: contain; }
+        .history-item-info { flex-grow: 1; min-width: 0; } /* Fix for overflow */
+        .history-item-title { font-size: 16px; color: var(--link-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+        .history-item-url { font-size: 13px; color: var(--secondary-text-color); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .delete-history-btn { cursor: pointer; width: 36px; height: 36px; border-radius: 50%; display: flex; justify-content: center; align-items: center; font-size: 20px; color: white; background-color: var(--delete-icon-bg); border: none; flex-shrink: 0; margin-left: 12px; }
+
         /* --- SOLUTION: Custom Context Menu for Links --- */
         #context-menu-overlay {
             position: fixed;
@@ -319,7 +328,7 @@
                 <li id="share-button"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M18 16.08c-.76 0-1.44.3-1.96.77L8.91 12.7c.05-.23.09-.46.09-.7s-.04-.47-.09-.7l7.05-4.11c.54.5 1.25.81 2.04.81 1.66 0 3-1.34 3-3s-1.34-3-3-3-3 1.34-3 3c0 .24.04.47.09.7L8.04 9.81C7.5 9.31 6.79 9 6 9c-1.66 0-3 1.34-3 3s1.34 3 3 3c.79 0 1.5-.31 2.04-.81l7.12 4.16c-.05.21-.08.43-.08.65 0 1.66 1.34 3 3 3s3-1.34 3-3-1.34-3-3-3z"/></svg>Share</li>
                 <div class="dropdown-menu-divider"></div>
                 <li id="history-button"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M13 3c-4.97 0-9 4.03-9 9H1l3.89 3.89.07.14L9 12H6c0-3.87 3.13-7 7-7s7 3.13 7 7-3.13 7-7 7c-1.93 0-3.68-.79-4.94-2.06l-1.42 1.42C8.27 19.99 10.51 21 13 21c4.97 0 9-4.03 9-9s-4.03-9-9-9zm-1 5v5l4.28 2.54.72-1.21-3.5-2.08V8H12z"/></svg>History</li>
-                <li><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
+                <li id="downloads-button"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M19.35 10.04C18.67 6.59 15.64 4 12 4 9.11 4 6.6 5.64 5.35 8.04 2.34 8.36 0 10.91 0 14c0 3.31 2.69 6 6 6h13c2.76 0 5-2.24 5-5 0-2.64-2.05-4.78-4.65-4.96zM17 13l-5 5-5-5h3V9h4v4h3z"/></svg>Downloads</li>
                 <div class="dropdown-menu-divider"></div>
                 <li id="desktop-site-button" class="desktop-site-option"><svg width="24" height="24" viewBox="0 0 24 24"><path d="M20 18c1.1 0 1.99-.9 1.99-2L22 6c0-1.1-.9-2-2-2H4c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2H0v2h24v-2h-4zM4 6h16v10H4V6z"/></svg><span>Desktop site</span><label class="desktop-site-toggle"><input type="checkbox"><span class="toggle-slider"></span></label></li>
                 <li id="edit-shortcuts-button"><svg width="24" height="24" viewBox="0 0 24 24"><path fill="currentColor" d="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75L3 17.25zM20.71 7.04c.39-.39.39-1.02 0-1.41l-2.34-2.34c-.39-.39-1.02-.39-1.41 0l-1.83 1.83 3.75 3.75 1.83-1.83z"/></svg>Edit Shortcuts</li>
@@ -368,12 +377,11 @@
             <div class="history-control-section">
                 <span class="history-control-label">OFF</span>
                 <label class="theme-switch">
-                    <input type="checkbox" id="history-toggle" checked>
+                    <input type="checkbox" id="history-toggle">
                     <span class="slider"></span>
                 </label>
                 <span class="history-control-label">ON</span>
             </div>
-            <!-- History items will be rendered here in the future -->
             <div id="history-items-container"></div>
         </main>
     </div>
@@ -417,6 +425,8 @@
             // --- CONSTANTS & CONFIGURATION ---
             const SHORTCUTS_STORAGE_KEY = 'browserHomePageShortcuts';
             const THEME_STORAGE_KEY = 'browserThemePreference';
+            const HISTORY_ENABLED_KEY = 'browserHistoryEnabled'; // ** NEW **
+            const HISTORY_ITEMS_KEY = 'browserHistoryItems';     // ** NEW **
             const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284'; 
             const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
             
@@ -461,6 +471,42 @@
             const contextMenuHeaderTitle = document.getElementById('context-menu-title');
             const contextMenuHeaderUrl = document.getElementById('context-menu-url');
             let activeLinkElement = null;
+            // ** NEW ** HISTORY ELEMENTS
+            const historyToggle = document.getElementById('history-toggle');
+            const historyItemsContainer = document.getElementById('history-items-container');
+            // ** NEW ** SHARE & DOWNLOADS BUTTONS
+            const shareButton = document.getElementById('share-button');
+            const downloadsButton = document.getElementById('downloads-button');
+
+            // --- SOLUTION 2: DOWNLOAD MANAGER BRIDGE ---
+            window.handleDownloadRequest = (url, filename) => {
+                // If a filename isn't provided, extract it from the URL
+                if (!filename) {
+                    try {
+                        const urlObject = new URL(url);
+                        const pathParts = urlObject.pathname.split('/');
+                        filename = pathParts[pathParts.length - 1] || 'download';
+                    } catch (e) {
+                        filename = 'download';
+                    }
+                }
+                
+                // Check for the Sketchware native interface
+                if (window.SketchwareApp && typeof window.SketchwareApp.onDownloadRequested === 'function') {
+                    SketchwareApp.onDownloadRequested(url, filename);
+                    showToast(`Starting download: ${filename}`);
+                } else {
+                    // Fallback for standard web environment
+                    console.log(`Sketchware bridge not found. Simulating download for: ${url}`);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = filename;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    showToast('Download started (fallback).');
+                }
+            };
             
             // --- THEME MANAGEMENT ---
             const applyTheme = (theme) => {
@@ -499,22 +545,6 @@
                 setTimeout(() => { toastMessage.classList.remove('show'); }, 2500);
             };
 
-            // --- SOLUTION 2: NATIVE APP (SKETCHWARE) INTEGRATION FOR BACK NAVIGATION ---
-            // The following JavaScript function `handleBackButtonPress` should ONLY be called from your native app code
-            // when the WebView itself cannot navigate back.
-            //
-            // CORRECT NATIVE onBACKPRESSED LOGIC:
-            //
-            // if (WebView.canGoBack()) {
-            //     WebView.goBack();
-            // } else {
-            //     // Only if the WebView history is empty, call our JavaScript function
-            //     WebView.loadUrl("javascript:handleBackButtonPress()");
-            // }
-            //
-            // This ensures that internal page navigation (e.g., from YouTube home to a video) works correctly
-            // before the app-level back logic is triggered.
-
             // --- Back Button System ---
             window.handleBackButtonPress = () => {
                 if (dropdownMenu.classList.contains('show')) { dropdownMenu.classList.remove('show'); return true; }
@@ -527,7 +557,7 @@
                 const state = event.state;
                 if (state && state.pageType === 'results') { performSearch(state.query, state.type, state.pageNum, true); }
                 else if (state && state.pageType === 'edit') { showPage(editShortcutsPage); renderEditShortcutsList(); }
-                else if (state && state.pageType === 'history') { showPage(historyPage); }
+                else if (state && state.pageType === 'history') { showPage(historyPage); renderHistory(); }
                 else { showPage(homeScreen); }
             });
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
@@ -548,7 +578,7 @@
                     const li = document.createElement('li'); li.textContent = suggestion;
                     li.addEventListener('click', () => { 
                         searchBar.value = suggestion; 
-                        searchBar.blur(); // SOLUTION 1: Hide keyboard
+                        searchBar.blur(); 
                         hideSuggestions(); 
                         showLoader(); 
                         performSearch(suggestion); 
@@ -653,9 +683,8 @@
                         if (navigator.share) { try { await navigator.share({ title: text, url: url }); } catch (err) {} }
                         else { try { await navigator.clipboard.writeText(url); showToast('Share not available. Link copied.'); } catch (err) { showToast('Share not available'); } }
                         break;
-                    case 'download':
-                        const a = document.createElement('a'); a.href = url; a.download = '';
-                        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+                    case 'download': // ** MODIFIED FOR DOWNLOAD BRIDGE **
+                        window.handleDownloadRequest(url);
                         break;
                 }
             });
@@ -670,27 +699,23 @@
             // --- RESILIENT LOCALSTORAGE FOR SHORTCUTS ---
             const getShortcuts = () => {
                 try {
-                    if (!window.localStorage) { console.warn("LocalStorage is not available."); return []; }
                     const shortcuts = localStorage.getItem(SHORTCUTS_STORAGE_KEY);
                     return shortcuts ? JSON.parse(shortcuts) : [];
-                } catch (e) {
-                    console.error("Could not read from localStorage.", e);
-                    return []; 
-                }
+                } catch (e) { console.error("Could not read from localStorage.", e); return []; }
             };
             const saveShortcuts = shortcuts => {
-                try {
-                    if (!window.localStorage) { throw new Error("LocalStorage is not available."); }
-                    localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts));
-                } catch (e) {
-                    console.error("Could not save to localStorage.", e);
-                    showToast("Error: Could not save shortcut.");
-                }
+                try { localStorage.setItem(SHORTCUTS_STORAGE_KEY, JSON.stringify(shortcuts)); } 
+                catch (e) { console.error("Could not save to localStorage.", e); showToast("Error: Could not save shortcut."); }
             };
             const renderShortcuts = () => {
                 shortcutsContainer.querySelectorAll('.shortcut-item:not(#add-shortcut-button)').forEach(sc => sc.remove());
                 getShortcuts().forEach(shortcut => {
-                    const shortcutLink = document.createElement('a'); shortcutLink.href = shortcut.url; shortcutLink.className = 'shortcut-item'; shortcutLink.title = shortcut.name;
+                    const shortcutLink = document.createElement('a');
+                    shortcutLink.href = shortcut.url;
+                    shortcutLink.className = 'shortcut-item';
+                    shortcutLink.title = shortcut.name;
+                    shortcutLink.addEventListener('click', () => addHistoryItem(shortcut.url, shortcut.name)); // ** ADDED FOR HISTORY **
+                    
                     const iconDiv = document.createElement('div'); iconDiv.className = 'shortcut-icon';
                     const nameP = document.createElement('p'); nameP.className = 'shortcut-name'; nameP.textContent = shortcut.name;
                     const img = new Image(); img.src = `https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}`;
@@ -706,11 +731,6 @@
             
             addSiteForm.addEventListener('submit', e => {
                 e.preventDefault();
-                try {
-                    localStorage.setItem('storage_test', 'test_value'); localStorage.removeItem('storage_test');
-                } catch (err) {
-                    showToast("Cannot add site. Storage is disabled."); hideModal(); return;
-                }
                 let url = siteUrlInput.value.trim(); 
                 if (!/^https?:\/\//i.test(url)) { url = 'https://' + url; }
                 const shortcuts = getShortcuts(); 
@@ -740,17 +760,142 @@
                 }
             });
 
-            // --- SOLUTION 3: HISTORY PAGE FUNCTIONALITY ---
+            // --- SOLUTION 1: HISTORY SYSTEM IMPLEMENTATION ---
+            const getHistory = () => {
+                try {
+                    const history = localStorage.getItem(HISTORY_ITEMS_KEY);
+                    return history ? JSON.parse(history) : [];
+                } catch (e) { console.error("Could not read history.", e); return []; }
+            };
+
+            const saveHistory = (history) => {
+                try {
+                    localStorage.setItem(HISTORY_ITEMS_KEY, JSON.stringify(history));
+                } catch (e) { console.error("Could not save history.", e); }
+            };
+
+            const addHistoryItem = (url, title) => {
+                const isHistoryEnabled = localStorage.getItem(HISTORY_ENABLED_KEY) !== 'false';
+                if (!isHistoryEnabled) return;
+
+                const history = getHistory();
+                // Avoid adding the same URL consecutively
+                if (history.length > 0 && history[history.length - 1].url === url) return;
+
+                const domain = new URL(url).hostname;
+                const newItem = {
+                    url: url,
+                    title: title,
+                    favicon: `https://www.google.com/s2/favicons?sz=32&domain=${domain}`,
+                    timestamp: Date.now()
+                };
+                history.push(newItem);
+                saveHistory(history);
+            };
+            
+            const renderHistory = () => {
+                historyItemsContainer.innerHTML = '';
+                const history = getHistory().reverse(); // Show most recent first
+
+                if (history.length === 0) {
+                    historyItemsContainer.innerHTML = '<p style="text-align:center; padding: 40px 20px; color: var(--secondary-text-color);">Your browsing history is empty.</p>';
+                    return;
+                }
+
+                history.forEach(item => {
+                    const domain = new URL(item.url).hostname;
+                    const itemHTML = `
+                        <a href="${escapeHTML(item.url)}" class="history-item" data-timestamp="${item.timestamp}">
+                            <img class="favicon" src="${escapeHTML(item.favicon)}" alt="" onerror="this.style.visibility='hidden'">
+                            <div class="history-item-info">
+                                <div class="history-item-title">${escapeHTML(item.title)}</div>
+                                <div class="history-item-url">${escapeHTML(domain)}</div>
+                            </div>
+                            <button class="delete-history-btn" data-timestamp="${item.timestamp}" title="Delete History Item">&times;</button>
+                        </a>`;
+                    historyItemsContainer.insertAdjacentHTML('beforeend', itemHTML);
+                });
+            };
+
+            const initializeHistory = () => {
+                const isEnabled = localStorage.getItem(HISTORY_ENABLED_KEY) !== 'false'; // default to true
+                historyToggle.checked = isEnabled;
+                historyToggle.addEventListener('change', (e) => {
+                    localStorage.setItem(HISTORY_ENABLED_KEY, e.target.checked);
+                    showToast(e.target.checked ? "History recording is ON" : "History recording is OFF");
+                });
+            };
+            
             historyButton.addEventListener('click', () => {
                 history.pushState({ pageType: 'history' }, 'History');
                 showPage(historyPage);
-                // In the future, a function to render history items would go here.
+                renderHistory();
                 dropdownMenu.classList.remove('show');
             });
             historyDoneBtn.addEventListener('click', () => history.back());
+            
+            // Event delegation for deleting history items and adding new ones
+            historyItemsContainer.addEventListener('click', (e) => {
+                if (e.target.classList.contains('delete-history-btn')) {
+                    e.preventDefault(); // Prevent navigation
+                    e.stopPropagation();
+                    const timestamp = e.target.dataset.timestamp;
+                    let history = getHistory();
+                    history = history.filter(item => item.timestamp != timestamp);
+                    saveHistory(history);
+                    e.target.closest('.history-item').remove(); // Remove from view
+                }
+            });
+            
+            searchResultsPage.addEventListener('click', (e) => {
+                const link = e.target.closest('a[href]');
+                if (link && link.href) {
+                    const titleElem = link.querySelector('.organic-result-title, .image-title, .video-title');
+                    const title = titleElem ? titleElem.textContent.trim() : link.textContent.trim();
+                    addHistoryItem(link.href, title);
+                }
+            });
+
+            // --- SOLUTION 3: SHARE BRIDGE IMPLEMENTATION ---
+            shareButton.addEventListener('click', () => {
+                dropdownMenu.classList.remove('show');
+                let url;
+                let title;
+
+                if (!homeScreen.classList.contains('hidden')) {
+                    showToast("Navigate to a page to share it.");
+                    return;
+                } else if (!searchResultsPage.classList.contains('hidden')) {
+                    // In this SPA context, we'll share the search query itself
+                    url = `https://www.google.com/search?q=${encodeURIComponent(currentQuery)}`;
+                    title = `Search results for: ${currentQuery}`;
+                } else {
+                     // As a generic fallback, if other pages were added
+                    url = window.location.href;
+                    title = document.title;
+                }
+                
+                // Check for the Sketchware native interface
+                if (window.SketchwareApp && typeof window.SketchwareApp.onShareRequested === 'function') {
+                    SketchwareApp.onShareRequested(url, title);
+                } else if (navigator.share) {
+                    // Fallback to the Web Share API for standard browsers
+                    navigator.share({ title: title, url: url }).catch(err => console.log('Share failed:', err));
+                } else {
+                    // Final fallback if nothing else is available
+                    showToast("Share feature not available.");
+                }
+            });
+
+            // Downloads button placeholder functionality
+            downloadsButton.addEventListener('click', () => {
+                dropdownMenu.classList.remove('show');
+                showToast("Downloads page is not yet implemented.");
+            });
 
             // --- INITIAL LOAD ---
             initializeTheme();
+            initializeHistory(); // ** NEW **
             renderShortcuts();
         });
     </script>
