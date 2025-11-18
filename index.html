@@ -170,7 +170,9 @@
         input:checked + .slider:before { transform: translateX(20px); }
 
         /* --- Page Content Layout --- */
-        #home-screen, #search-results-page, #edit-shortcuts-page, #history-page { padding-top: var(--header-height); }
+        #home-screen, #search-results-page, #edit-shortcuts-page, #history-page, #downloads-page { 
+            padding-top: var(--header-height); 
+        }
         
         /* --- Home Screen Content --- */
         .shortcuts-container { padding: 16px 8px; display: grid; grid-template-columns: repeat(auto-fill, minmax(80px, 1fr)); gap: 16px; justify-items: center; }
@@ -319,6 +321,19 @@
         }
         #context-menu-title { font-size: 15px; color: var(--text-color); }
         #context-menu-url { font-size: 13px; color: var(--secondary-text-color); }
+        
+        /* NEW: Downloads Page Styles */
+        #downloads-page { padding-top: var(--header-icons-height); }
+        .downloads-empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--secondary-text-color);
+        }
+        .downloads-empty-state h3 {
+            font-size: 18px;
+            margin-bottom: 8px;
+            color: var(--text-color);
+        }
     </style>
 </head>
 <body>
@@ -412,6 +427,20 @@
             </div>
             <div id="history-items-container"></div>
         </main>
+        
+        <!-- NEW: Downloads Page -->
+        <main id="downloads-page" class="hidden">
+            <header class="page-header">
+                <button class="icon-button" id="downloads-done-btn">
+                    <svg xmlns="http://www.w3.org/2000/svg" height="24px" viewBox="0 0 24 24" width="24px"><path d="M0 0h24v24H0z" fill="none"/><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg>
+                </button>
+                <h2>Downloads</h2>
+            </header>
+            <div class="downloads-empty-state">
+                <h3>No downloads yet</h3>
+                <p>Files you download will appear here</p>
+            </div>
+        </main>
     </div>
 
     <!-- Modals and Toasts -->
@@ -482,6 +511,7 @@
             const searchResultsPage = document.getElementById('search-results-page');
             const editShortcutsPage = document.getElementById('edit-shortcuts-page');
             const historyPage = document.getElementById('history-page');
+            const downloadsPage = document.getElementById('downloads-page'); // NEW: Downloads page
             const fullPageLoader = document.getElementById('full-page-loader');
             const addShortcutButton = document.getElementById('add-shortcut-button');
             const modalOverlay = document.getElementById('add-site-modal');
@@ -495,6 +525,7 @@
             const editShortcutsList = document.getElementById('edit-shortcuts-list');
             const historyButton = document.getElementById('history-button');
             const historyDoneBtn = document.getElementById('history-done-btn');
+            const downloadsDoneBtn = document.getElementById('downloads-done-btn'); // NEW: Downloads done button
             const toastMessage = document.getElementById('toast-message');
             const contextMenu = document.getElementById('custom-context-menu');
             const contextMenuOverlay = document.getElementById('context-menu-overlay');
@@ -529,7 +560,7 @@
                     if (!isWebsiteViewActive) {
                         // Hide all main content pages of the browser UI. 'lastActivePage' is already
                         // set by the last call to showPage(), so we know where to return to.
-                        [homeScreen, searchResultsPage, editShortcutsPage, historyPage].forEach(page => page.classList.add('hidden'));
+                        [homeScreen, searchResultsPage, editShortcutsPage, historyPage, downloadsPage].forEach(page => page.classList.add('hidden'));
                         isWebsiteViewActive = true;
                     }
 
@@ -614,7 +645,7 @@
             // --- UI/PAGE NAVIGATION LOGIC ---
             const showPage = (pageToShow) => {
                 isWebsiteViewActive = false; // If we are showing an internal page, we are not in website view.
-                [homeScreen, searchResultsPage, editShortcutsPage, historyPage].forEach(page => page.classList.toggle('hidden', page !== pageToShow));
+                [homeScreen, searchResultsPage, editShortcutsPage, historyPage, downloadsPage].forEach(page => page.classList.toggle('hidden', page !== pageToShow));
                 headerDomainRow.classList.add('hidden'); // Always hide domain row when showing internal page
                 headerSearchRow.classList.toggle('hidden', pageToShow !== homeScreen && pageToShow !== searchResultsPage);
                 document.documentElement.scrollTop = 0;
@@ -630,6 +661,7 @@
                 if (state && state.pageType === 'results') { performSearch(state.query, state.type, state.pageNum, true); }
                 else if (state && state.pageType === 'edit') { showPage(editShortcutsPage); renderEditShortcutsList(); }
                 else if (state && state.pageType === 'history') { showPage(historyPage); renderHistory(); }
+                else if (state && state.pageType === 'downloads') { showPage(downloadsPage); } // NEW: Handle downloads page
                 else { showPage(homeScreen); }
             });
             history.replaceState({ pageType: 'home' }, 'Home', '#home');
@@ -684,7 +716,6 @@
             const renderEditShortcutsList = () => { editShortcutsList.innerHTML = ''; const shortcuts = getShortcuts(); if (shortcuts.length === 0) { editShortcutsList.innerHTML = '<p style="text-align:center; padding: 20px;">No shortcuts added yet.</p>'; return; } shortcuts.forEach((shortcut, index) => { editShortcutsList.innerHTML += `<div class="edit-shortcut-item"><div class="shortcut-icon" style="background-image:url('https://www.google.com/s2/favicons?sz=64&domain=${new URL(shortcut.url).hostname}')">${shortcut.name.charAt(0).toUpperCase()}</div><div class="edit-shortcut-info"><div class="edit-shortcut-name">${escapeHTML(shortcut.name)}</div><div class="edit-shortcut-url">${escapeHTML(shortcut.url)}</div></div><button class="delete-shortcut-btn" data-index="${index}" title="Delete Shortcut">&times;</button></div>`; }); };
             editShortcutsButton.addEventListener('click', () => { history.pushState({ pageType: 'edit' }, 'Edit Shortcuts'); showPage(editShortcutsPage); renderEditShortcutsList(); dropdownMenu.classList.remove('show'); });
             editShortcutsDoneBtn.addEventListener('click', () => history.back());
-            editShortcutsList.addEventListener('click', (e) => { if (e.target.classList.contains('delete-shortcut-btn')) { let shortcuts = getShortcuts(); shortcuts.splice(parseInt(e.target.dataset.index, 10), 1); saveShortcuts(shortcuts); renderShortcuts(); renderEditShortcutsList(); } });
 
             // --- HISTORY SYSTEM ---
             const getHistory = () => { try { const history = localStorage.getItem(HISTORY_ITEMS_KEY); return history ? JSON.parse(history) : []; } catch (e) { console.error("Could not read history.", e); return []; } };
@@ -697,10 +728,17 @@
             historyItemsContainer.addEventListener('click', (e) => { if (e.target.classList.contains('delete-history-btn')) { e.preventDefault(); e.stopPropagation(); const timestamp = e.target.dataset.timestamp; let history = getHistory().filter(item => item.timestamp != timestamp); saveHistory(history); e.target.closest('.history-item').remove(); } });
             searchResultsPage.addEventListener('click', (e) => { const link = e.target.closest('a[href]'); if (link && link.href) { const titleElem = link.querySelector('.organic-result-title, .image-title, .video-title'); const title = titleElem ? titleElem.textContent.trim() : link.textContent.trim(); addHistoryItem(link.href, title); } });
 
+            // --- NEW: DOWNLOADS PAGE FUNCTIONALITY ---
+            downloadsButton.addEventListener('click', () => { 
+                history.pushState({ pageType: 'downloads' }, 'Downloads'); 
+                showPage(downloadsPage); 
+                dropdownMenu.classList.remove('show'); 
+            });
+            downloadsDoneBtn.addEventListener('click', () => history.back());
+
             // --- MENU BUTTON LOGIC ---
             newTabButton.addEventListener('click', () => { dropdownMenu.classList.remove('show'); window.handleNewTabRequest(); });
             shareButton.addEventListener('click', () => { dropdownMenu.classList.remove('show'); let url; let title; if (!homeScreen.classList.contains('hidden')) { showToast("Navigate to a page to share it."); return; } else if (!searchResultsPage.classList.contains('hidden')) { url = `https://www.google.com/search?q=${encodeURIComponent(currentQuery)}`; title = `Search results for: ${currentQuery}`; } else { url = window.location.href; title = document.title; } window.handleShareRequest(url, title); });
-            downloadsButton.addEventListener('click', () => { dropdownMenu.classList.remove('show'); window.handleShowDownloadsRequest(); });
             const initializeDesktopMode = () => { let isDesktop = false; try { isDesktop = localStorage.getItem(DESKTOP_MODE_STORAGE_KEY) === 'true'; } catch(e) {} desktopSiteToggle.checked = isDesktop; };
             desktopSiteToggle.addEventListener('change', () => { const isDesktopEnabled = desktopSiteToggle.checked; try { localStorage.setItem(DESKTOP_MODE_STORAGE_KEY, isDesktopEnabled); } catch(e) {} window.handleDesktopModeToggle(isDesktopEnabled); });
 
