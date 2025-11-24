@@ -32,6 +32,10 @@
             --header-height: 120px; 
             --header-icons-height: 56px;
             --header-search-row-height: 64px;
+            --tab-card-bg: #ffffff;
+            --tab-card-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            --tab-grid-gap: 12px;
+            --tab-card-border-radius: 12px;
         }
 
         /* Dark Theme class applied to <body> */
@@ -51,6 +55,8 @@
             --toast-bg: rgba(232, 234, 237, 0.9);
             --toast-text-color: #202124;
             --delete-icon-bg: rgba(255, 80, 80, 0.7);
+            --tab-card-bg: #3c4043;
+            --tab-card-shadow: 0 2px 8px rgba(0,0,0,0.3);
         }
 
         * {
@@ -94,7 +100,17 @@
         .header-icons { display: flex; align-items: center; gap: 20px; }
         .icon-button { font-size: 24px; cursor: pointer; color: var(--text-color); background: none; border: none; display: flex; align-items: center; justify-content: center; padding: 4px; }
         .icon-button svg { fill: var(--text-color); }
-        .tab-switcher { font-size: 14px; font-weight: 500; border: 2px solid var(--secondary-text-color); border-radius: 6px; padding: 2px 8px; min-width: 28px; text-align: center; }
+        .tab-switcher { 
+            font-size: 14px; 
+            font-weight: 500; 
+            border: 2px solid var(--secondary-text-color); 
+            border-radius: 6px; 
+            padding: 2px 8px; 
+            min-width: 28px; 
+            text-align: center; 
+            cursor: pointer;
+            user-select: none;
+        }
         
         .header-search-row { 
             padding: 4px 16px 16px 16px; 
@@ -121,8 +137,166 @@
             text-overflow: ellipsis;
         }
 
+        /* --- NEW: Tab Management System --- */
+        #tab-management-screen {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: var(--background-color);
+            z-index: 2000;
+            padding-top: var(--header-height);
+            overflow-y: auto;
+            transition: transform 0.3s ease;
+        }
 
-        /* --- NEW: Auto-Suggest Search Box --- */
+        .tab-management-header {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--background-color);
+            z-index: 2001;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-management-title {
+            font-size: 18px;
+            font-weight: 500;
+        }
+
+        .close-tab-view-btn {
+            background: none;
+            border: none;
+            color: var(--button-color);
+            font-size: 16px;
+            font-weight: 500;
+            cursor: pointer;
+        }
+
+        .tabs-grid-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+            gap: var(--tab-grid-gap);
+            padding: 16px;
+            margin-top: 60px;
+        }
+
+        .tab-card {
+            background-color: var(--tab-card-bg);
+            border-radius: var(--tab-card-border-radius);
+            box-shadow: var(--tab-card-shadow);
+            overflow: hidden;
+            position: relative;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .tab-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .tab-card.active {
+            border: 2px solid var(--button-color);
+        }
+
+        .tab-thumbnail {
+            width: 100%;
+            height: 100px;
+            background-color: var(--search-bar-bg);
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .tab-close-btn {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            background-color: rgba(0, 0, 0, 0.6);
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            cursor: pointer;
+            border: none;
+            opacity: 0;
+            transition: opacity 0.2s ease;
+        }
+
+        .tab-card:hover .tab-close-btn {
+            opacity: 1;
+        }
+
+        .tab-info {
+            padding: 12px;
+        }
+
+        .tab-title {
+            font-size: 14px;
+            font-weight: 500;
+            color: var(--text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            margin-bottom: 4px;
+        }
+
+        .tab-domain {
+            font-size: 12px;
+            color: var(--secondary-text-color);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .add-tab-card {
+            background-color: var(--tab-card-bg);
+            border-radius: var(--tab-card-border-radius);
+            box-shadow: var(--tab-card-shadow);
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            height: 160px;
+            cursor: pointer;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .add-tab-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow-color);
+        }
+
+        .add-tab-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background-color: var(--button-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 24px;
+            margin-bottom: 12px;
+        }
+
+        .add-tab-text {
+            font-size: 14px;
+            color: var(--text-color);
+            font-weight: 500;
+        }
+
+        /* --- Auto-Suggest Search Box --- */
         .suggestions-box {
             display: none; /* Hidden by default */
             position: absolute;
@@ -343,6 +517,17 @@
     </div>
     
     <div id="app-container">
+        <!-- NEW: Tab Management Screen -->
+        <div id="tab-management-screen" class="hidden">
+            <div class="tab-management-header">
+                <div class="tab-management-title">Tabs</div>
+                <button class="close-tab-view-btn" id="close-tab-view-btn">Done</button>
+            </div>
+            <div class="tabs-grid-container" id="tabs-grid-container">
+                <!-- Tab cards will be dynamically generated here -->
+            </div>
+        </div>
+
         <!-- Persistent Universal Header -->
         <header class="universal-header">
             <div class="header-top-row">
@@ -476,7 +661,6 @@
         </ul>
     </div>
 
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             // --- CONSTANTS & CONFIGURATION ---
@@ -485,6 +669,8 @@
             const HISTORY_ENABLED_KEY = 'browserHistoryEnabled';
             const HISTORY_ITEMS_KEY = 'browserHistoryItems';
             const DESKTOP_MODE_STORAGE_KEY = 'browserDesktopModePreference';
+            const TABS_STORAGE_KEY = 'browserTabs';
+            const ACTIVE_TAB_STORAGE_KEY = 'browserActiveTab';
             const SERP_API_KEY = '62ca9ec8ea4418341770d9b364c296924425415c29ff02427197f01a4a698284'; 
             const CORS_PROXY_URL = 'https://api.allorigins.win/raw?url=';
             
@@ -497,6 +683,10 @@
             let isLongPress = false;
             let isWebsiteViewActive = false; // NEW: Tracks if we are viewing a website
             let lastActivePage; // NEW: Remembers the last UI page (home, results, etc.)
+            
+            // --- TAB MANAGEMENT STATE ---
+            let tabs = [];
+            let activeTabIndex = 0;
 
             // --- DOM ELEMENT SELECTIONS ---
             const body = document.body;
@@ -543,6 +733,12 @@
             // NEW DOM ELEMENTS FOR WEBSITE VIEW HEADER
             const headerDomainRow = document.getElementById('header-domain-row');
             const domainDisplay = document.getElementById('domain-display');
+            
+            // NEW DOM ELEMENTS FOR TAB MANAGEMENT
+            const tabManagementScreen = document.getElementById('tab-management-screen');
+            const tabsGridContainer = document.getElementById('tabs-grid-container');
+            const closeTabViewBtn = document.getElementById('close-tab-view-btn');
+            const tabCountDisplay = document.getElementById('tab-count');
 
 
             // --- SKETCHWARE BRIDGE & APP STATE MANAGEMENT ---
@@ -575,6 +771,11 @@
                     } catch (e) {
                         domainDisplay.textContent = url.split('/')[2] || 'Loading...'; // Fallback
                     }
+                    
+                    // Update the active tab with the current URL
+                    if (tabs.length > 0 && activeTabIndex < tabs.length) {
+                        updateTabUrl(activeTabIndex, url);
+                    }
                 },
 
                 /**
@@ -602,6 +803,12 @@
                  * home screen), indicating the native app should handle the final back press (e.g., exit the app).
                  */
                 handleBackButtonPress: () => {
+                    // First check if tab management screen is open
+                    if (!tabManagementScreen.classList.contains('hidden')) {
+                        closeTabManagementScreen();
+                        return true;
+                    }
+                    
                     // This function is now only called when the content view cannot go back.
                     // Its first job is to exit website view if active.
                     if (isWebsiteViewActive) {
@@ -631,10 +838,290 @@
             
             window.handleDownloadRequest = (url) => { if (window.SketchwareApp && typeof window.SketchwareApp.onDownloadRequested === 'function') { SketchwareApp.onDownloadRequested(url); showToast('Starting download...'); } else { console.warn(`Sketchware bridge not found. Simulating download for: ${url}`); const a = document.createElement('a'); a.href = url; a.download = ''; document.body.appendChild(a); a.click(); document.body.removeChild(a); showToast('Download started (web fallback).'); }};
             window.handleShareRequest = (url, title) => { if (window.SketchwareApp && typeof window.SketchwareApp.onShareRequested === 'function') { SketchwareApp.onShareRequested(url, title); } else if (navigator.share) { navigator.share({ title, url }).catch(err => console.error('Web Share API failed:', err)); } else { navigator.clipboard.writeText(url).then(() => { showToast("Share unavailable. Link copied."); }).catch(() => { showToast("Share feature not available."); }); }};
-            window.handleNewTabRequest = () => { if (window.SketchwareApp && typeof window.SketchwareApp.onNewTabRequested === 'function') { SketchwareApp.onNewTabRequested(); } else { console.warn('Sketchware bridge not found.'); window.open(window.location.href.split('#')[0], '_blank'); showToast('New tab opened (web fallback).'); }};
+            window.handleNewTabRequest = () => { 
+                if (window.SketchwareApp && typeof window.SketchwareApp.onNewTabRequested === 'function') { 
+                    SketchwareApp.onNewTabRequested(); 
+                } else { 
+                    console.warn('Sketchware bridge not found.'); 
+                    createNewTab(); 
+                    showToast('New tab opened (web fallback).'); 
+                }
+            };
             window.handleDesktopModeToggle = (isDesktop) => { if (window.SketchwareApp && typeof window.SketchwareApp.onDesktopModeChanged === 'function') { SketchwareApp.onDesktopModeChanged(isDesktop); showToast(isDesktop ? "Reloading with desktop site..." : "Reloading with mobile site..."); } else { console.warn('Sketchware bridge not found.'); showToast('Desktop mode control unavailable.'); desktopSiteToggle.checked = !isDesktop; try { localStorage.setItem(DESKTOP_MODE_STORAGE_KEY, !isDesktop); } catch (e) {} }};
             window.handleShowDownloadsRequest = () => { if (window.SketchwareApp && typeof window.SketchwareApp.onShowDownloadsRequested === 'function') { SketchwareApp.onShowDownloadsRequested(); } else { console.warn('Sketchware bridge not found.'); showToast('Downloads page is unavailable.'); }};
             
+            // --- TAB MANAGEMENT SYSTEM ---
+            
+            /**
+             * Initialize tabs from localStorage or create default tab
+             */
+            const initializeTabs = () => {
+                try {
+                    const savedTabs = localStorage.getItem(TABS_STORAGE_KEY);
+                    const savedActiveTab = localStorage.getItem(ACTIVE_TAB_STORAGE_KEY);
+                    
+                    if (savedTabs) {
+                        tabs = JSON.parse(savedTabs);
+                        activeTabIndex = savedActiveTab ? parseInt(savedActiveTab) : 0;
+                    } else {
+                        // Create default tab
+                        tabs = [{
+                            id: Date.now(),
+                            title: 'New Tab',
+                            url: '',
+                            favicon: '',
+                            lastAccessed: Date.now()
+                        }];
+                        activeTabIndex = 0;
+                        saveTabs();
+                    }
+                    
+                    updateTabCountDisplay();
+                } catch (e) {
+                    console.error('Error initializing tabs:', e);
+                    // Fallback to default tab
+                    tabs = [{
+                        id: Date.now(),
+                        title: 'New Tab',
+                        url: '',
+                        favicon: '',
+                        lastAccessed: Date.now()
+                    }];
+                    activeTabIndex = 0;
+                    updateTabCountDisplay();
+                }
+            };
+            
+            /**
+             * Save tabs to localStorage
+             */
+            const saveTabs = () => {
+                try {
+                    localStorage.setItem(TABS_STORAGE_KEY, JSON.stringify(tabs));
+                    localStorage.setItem(ACTIVE_TAB_STORAGE_KEY, activeTabIndex.toString());
+                } catch (e) {
+                    console.error('Error saving tabs:', e);
+                }
+            };
+            
+            /**
+             * Update the tab counter display
+             */
+            const updateTabCountDisplay = () => {
+                tabCountDisplay.textContent = tabs.length.toString();
+            };
+            
+            /**
+             * Create a new tab
+             */
+            const createNewTab = (url = '', title = 'New Tab') => {
+                const newTab = {
+                    id: Date.now(),
+                    title: title,
+                    url: url,
+                    favicon: '',
+                    lastAccessed: Date.now()
+                };
+                
+                tabs.push(newTab);
+                activeTabIndex = tabs.length - 1;
+                
+                saveTabs();
+                updateTabCountDisplay();
+                
+                // If in tab management view, refresh the display
+                if (!tabManagementScreen.classList.contains('hidden')) {
+                    renderTabGrid();
+                }
+                
+                return newTab;
+            };
+            
+            /**
+             * Close a tab by index
+             */
+            const closeTab = (index) => {
+                if (tabs.length <= 1) {
+                    showToast('Cannot close the last tab');
+                    return;
+                }
+                
+                tabs.splice(index, 1);
+                
+                // Adjust active tab index if needed
+                if (activeTabIndex >= index && activeTabIndex > 0) {
+                    activeTabIndex--;
+                }
+                
+                // If we closed the active tab, activate the previous one
+                if (activeTabIndex >= tabs.length) {
+                    activeTabIndex = tabs.length - 1;
+                }
+                
+                saveTabs();
+                updateTabCountDisplay();
+                
+                // Refresh tab grid if visible
+                if (!tabManagementScreen.classList.contains('hidden')) {
+                    renderTabGrid();
+                }
+                
+                showToast('Tab closed');
+            };
+            
+            /**
+             * Switch to a specific tab
+             */
+            const switchToTab = (index) => {
+                if (index < 0 || index >= tabs.length) return;
+                
+                activeTabIndex = index;
+                tabs[activeTabIndex].lastAccessed = Date.now();
+                
+                saveTabs();
+                
+                // If we're in tab management view, close it and navigate to the tab
+                if (!tabManagementScreen.classList.contains('hidden')) {
+                    closeTabManagementScreen();
+                }
+                
+                // Navigate to the tab's URL if it exists
+                const tab = tabs[activeTabIndex];
+                if (tab.url && tab.url.trim() !== '') {
+                    // This would typically be handled by the native app
+                    if (window.SketchwareApp && typeof window.SketchwareApp.onTabSwitched === 'function') {
+                        SketchwareApp.onTabSwitched(tab.url);
+                    } else {
+                        // Fallback for web version
+                        showToast(`Switched to: ${tab.title}`);
+                    }
+                } else {
+                    // If it's a new tab, show the home screen
+                    showPage(homeScreen);
+                }
+            };
+            
+            /**
+             * Update a tab's URL and title
+             */
+            const updateTabUrl = (index, url, title = null) => {
+                if (index < 0 || index >= tabs.length) return;
+                
+                tabs[index].url = url;
+                tabs[index].lastAccessed = Date.now();
+                
+                // Extract domain for title if not provided
+                if (!title) {
+                    try {
+                        const domain = new URL(url).hostname.replace(/^www\./, '');
+                        tabs[index].title = domain.charAt(0).toUpperCase() + domain.slice(1);
+                    } catch (e) {
+                        tabs[index].title = 'New Tab';
+                    }
+                } else {
+                    tabs[index].title = title;
+                }
+                
+                // Update favicon
+                try {
+                    const domain = new URL(url).hostname;
+                    tabs[index].favicon = `https://www.google.com/s2/favicons?sz=64&domain=${domain}`;
+                } catch (e) {
+                    tabs[index].favicon = '';
+                }
+                
+                saveTabs();
+                
+                // Refresh tab grid if visible
+                if (!tabManagementScreen.classList.contains('hidden')) {
+                    renderTabGrid();
+                }
+            };
+            
+            /**
+             * Render the tab grid for the tab management screen
+             */
+            const renderTabGrid = () => {
+                tabsGridContainer.innerHTML = '';
+                
+                // Add tab cards
+                tabs.forEach((tab, index) => {
+                    const tabCard = document.createElement('div');
+                    tabCard.className = `tab-card ${index === activeTabIndex ? 'active' : ''}`;
+                    tabCard.setAttribute('data-tab-index', index);
+                    
+                    // Use a placeholder if no URL is available
+                    const thumbnailUrl = tab.url ? `https://api.screenshotmachine.com/?key=demo&url=${encodeURIComponent(tab.url)}&dimension=1024x768` : '';
+                    
+                    tabCard.innerHTML = `
+                        <div class="tab-thumbnail" style="background-image: url('${thumbnailUrl}'); background-color: var(--search-bar-bg);">
+                            <button class="tab-close-btn" data-tab-index="${index}">&times;</button>
+                        </div>
+                        <div class="tab-info">
+                            <div class="tab-title">${escapeHTML(tab.title)}</div>
+                            <div class="tab-domain">${tab.url ? new URL(tab.url).hostname.replace(/^www\./, '') : 'New Tab'}</div>
+                        </div>
+                    `;
+                    
+                    tabsGridContainer.appendChild(tabCard);
+                    
+                    // Add event listeners
+                    tabCard.addEventListener('click', (e) => {
+                        if (!e.target.classList.contains('tab-close-btn')) {
+                            switchToTab(index);
+                        }
+                    });
+                });
+                
+                // Add "New Tab" card
+                const addTabCard = document.createElement('div');
+                addTabCard.className = 'add-tab-card';
+                addTabCard.innerHTML = `
+                    <div class="add-tab-icon">+</div>
+                    <div class="add-tab-text">New Tab</div>
+                `;
+                
+                addTabCard.addEventListener('click', () => {
+                    createNewTab();
+                    renderTabGrid();
+                });
+                
+                tabsGridContainer.appendChild(addTabCard);
+                
+                // Add close button event listeners
+                document.querySelectorAll('.tab-close-btn').forEach(btn => {
+                    btn.addEventListener('click', (e) => {
+                        e.stopPropagation();
+                        const index = parseInt(btn.getAttribute('data-tab-index'));
+                        closeTab(index);
+                    });
+                });
+            };
+            
+            /**
+             * Show the tab management screen
+             */
+            const showTabManagementScreen = () => {
+                renderTabGrid();
+                tabManagementScreen.classList.remove('hidden');
+                // Hide other pages
+                [homeScreen, searchResultsPage, editShortcutsPage, historyPage, downloadsPage].forEach(page => page.classList.add('hidden'));
+            };
+            
+            /**
+             * Close the tab management screen
+             */
+            const closeTabManagementScreen = () => {
+                tabManagementScreen.classList.add('hidden');
+                // Show the last active page
+                showPage(lastActivePage);
+            };
+            
+            // Tab switcher button event listener
+            tabCountDisplay.addEventListener('click', showTabManagementScreen);
+            
+            // Close tab view button event listener
+            closeTabViewBtn.addEventListener('click', closeTabManagementScreen);
 
             // --- THEME MANAGEMENT ---
             const applyTheme = (theme) => { if (theme === 'dark') { body.classList.add('dark-theme'); themeToggle.checked = true; } else { body.classList.remove('dark-theme'); themeToggle.checked = false; } };
@@ -746,6 +1233,7 @@
             initializeTheme();
             initializeHistory();
             initializeDesktopMode();
+            initializeTabs(); // Initialize tab system
             renderShortcuts();
             showPage(homeScreen); // Set initial page and lastActivePage
         });
